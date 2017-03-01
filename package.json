@@ -3,6 +3,8 @@
   "version": "0.0.0",
   "description": "Abstraction to handle AWS Lambda request.",
   "main": "dist/index.js",
+  "module": "dist/index.js",
+  "typings": "dist/index.d.ts",
   "scripts": {
     "test": "mocha --recursive dist/test/",
     "pretest": "npm run compile",
