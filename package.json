@@ -1,5 +1,5 @@
 {
-  "name": "LambdaHandler",
+  "name": "lambda-handler",
   "version": "0.0.0",
   "description": "Abstraction to handle AWS Lambda request.",
   "main": "dist/index.js",
