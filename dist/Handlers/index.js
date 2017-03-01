@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var AbstractHandler_1 = require("./AbstractHandler");
 exports.AbstractHandler = AbstractHandler_1.AbstractHandler;
 var NoopHandler_1 = require("./NoopHandler");

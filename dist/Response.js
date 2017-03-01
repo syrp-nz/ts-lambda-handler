@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var HttpError_1 = require("./Errors/HttpError");
 var Response = (function () {
     function Response(callback) {

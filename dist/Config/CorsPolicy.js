@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var CorsPolicy = (function () {
     function CorsPolicy(config) {
         this.config = config;
@@ -20,7 +21,7 @@ var CorsPolicy = (function () {
         }
         // Check which methods we want to allow on request.
         if (rules.allowedMethods && rules.allowedMethods.length > 0) {
-            headers['Access-Control-Allow-Methods'] = rules.allowedHeaders.join(',');
+            headers['Access-Control-Allow-Methods'] = rules.allowedMethods.join(',');
         }
         else {
             headers['Access-Control-Allow-Methods'] = '*';
