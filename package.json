@@ -6,7 +6,7 @@
   "scripts": {
     "test": "mocha dist/test",
     "pretest": "npm run compile",
-    "compile": "tsc"
+    "compile": "rm -rf dist; tsc"
   },
   "author": "Maxime Rainville <webmaster@syrp.co.nz> (https://syrp.co.nz)",
   "license": "ISC",
