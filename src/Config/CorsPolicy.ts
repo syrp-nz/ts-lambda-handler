@@ -36,7 +36,7 @@ export class CorsPolicy {
             const originProtocol = request.getOriginProtocol();
 
             // Let's check which protocol we want to allow
-            if (rules.allowHttp && originProtocol == 'http') {
+            if (rules.allowHttp && originProtocol == 'http:') {
                 origin = 'http://';
             } else {
                 origin = 'https://';
