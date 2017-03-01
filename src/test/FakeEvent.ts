@@ -29,9 +29,16 @@ export const fakeEvent: APIGatewayEvent = {
         "x-shopify-shop-domain":"syrpnz.myshopify.com",
         "x-shopify-test":"false",
         "x-shopify-topic":"orders/create",
-        "origin":"https://example.com"
+        "origin":"https://example.com",
+        "UPPER": "CASE",
+        "lower": "case",
+        "miXed": "cAsE"
     },
-    "queryStringParameters":null,
+    "queryStringParameters": {
+        "key1": "value",
+        "HeLLo": "world",
+        "FOO": "BAR",
+    },
     "pathParameters":null,
     "stageVariables":null,
     "requestContext":{
