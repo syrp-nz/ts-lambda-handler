@@ -1,0 +1,34 @@
+{
+  "name": "LambdaHandler",
+  "version": "0.0.0",
+  "description": "Abstraction to handle AWS Lambda request.",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "mocha dist/test",
+    "pretest": "npm run compile",
+    "compile": "tsc"
+  },
+  "author": "Maxime Rainville <webmaster@syrp.co.nz> (https://syrp.co.nz)",
+  "license": "ISC",
+  "dependencies": {
+    "dynamodb-doc": "^1.0.0",
+    "joi": "^10.2.0",
+    "jsonwebtoken": "^7.2.1",
+    "randomstring": "^1.1.5",
+    "request": "^2.79.0",
+    "request-promise": "^4.1.1",
+    "rxjs": "^5.1.1",
+    "uniqid": "^4.1.1"
+  },
+  "devDependencies": {
+    "@types/chai": "^3.4.34",
+    "@types/jasmine": "^2.5.43",
+    "aws-sdk-mock": "^1.6.1",
+    "chai": "^3.5.0",
+    "@djabry/aws-sdk-typescript": "0.0.11",
+    "@types/aws-lambda": "^0.0.7",
+    "@types/crypto-js": "^3.1.33",
+    "@types/node": "^7.0.5",
+    "@types/joi": "^10.0.0"
+  }
+}
