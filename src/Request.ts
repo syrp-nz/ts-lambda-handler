@@ -68,10 +68,18 @@ export class Request {
         return this.getHeader('content-type');
     }
 
+    /**
+     * Return the request origin's as defined by the origin header.
+     * @return {string} [description]
+     */
     public getOrigin(): string {
         return this.getHeader('origin');
     }
 
+    /**
+     * Return the request origin's domain.
+     * @return {string} [description]
+     */
     public getOriginDomain(): string {
         const origin = this.getOrigin();
         if (origin) {
@@ -84,12 +92,16 @@ export class Request {
         return '';
     }
 
+    /**
+     * Return the protocol of the Request Origin.
+     * @return {string} [description]
+     */
     public getOriginProtocol(): string {
         const origin = this.getOrigin();
         if (origin) {
             const url = Url.parse(origin);
             if (url.protocol) {
-                return url.protocol;
+                return url.protocol.replace(/:$/, '');
             }
         }
 
