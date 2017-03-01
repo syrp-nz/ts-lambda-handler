@@ -39,8 +39,20 @@ export declare class Request {
      * @return {string}
      */
     getContentType(): string;
+    /**
+     * Return the request origin's as defined by the origin header.
+     * @return {string} [description]
+     */
     getOrigin(): string;
+    /**
+     * Return the request origin's domain.
+     * @return {string} [description]
+     */
     getOriginDomain(): string;
+    /**
+     * Return the protocol of the Request Origin.
+     * @return {string} [description]
+     */
     getOriginProtocol(): string;
     /**
      * Attempt to parse the body content has defined by the content type header

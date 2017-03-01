@@ -68,9 +68,17 @@ var Request = (function () {
     Request.prototype.getContentType = function () {
         return this.getHeader('content-type');
     };
+    /**
+     * Return the request origin's as defined by the origin header.
+     * @return {string} [description]
+     */
     Request.prototype.getOrigin = function () {
         return this.getHeader('origin');
     };
+    /**
+     * Return the request origin's domain.
+     * @return {string} [description]
+     */
     Request.prototype.getOriginDomain = function () {
         var origin = this.getOrigin();
         if (origin) {
@@ -81,12 +89,16 @@ var Request = (function () {
         }
         return '';
     };
+    /**
+     * Return the protocol of the Request Origin.
+     * @return {string} [description]
+     */
     Request.prototype.getOriginProtocol = function () {
         var origin = this.getOrigin();
         if (origin) {
             var url = Url.parse(origin);
             if (url.protocol) {
-                return url.protocol;
+                return url.protocol.replace(/:$/, '');
             }
         }
         return '';
@@ -119,4 +131,4 @@ var Request = (function () {
     return Request;
 }());
 exports.Request = Request;
-//# sourceMappingURL=/var/www/LambdaHandler/src/Request.js.map
+//# sourceMappingURL=/var/www/lambdahandler/src/Request.js.map

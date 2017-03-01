@@ -51,4 +51,4 @@ var AbstractHandler = (function () {
     return AbstractHandler;
 }());
 exports.AbstractHandler = AbstractHandler;
-//# sourceMappingURL=/var/www/LambdaHandler/src/Handlers/AbstractHandler.js.map
+//# sourceMappingURL=/var/www/lambdahandler/src/Handlers/AbstractHandler.js.map

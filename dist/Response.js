@@ -80,4 +80,4 @@ var Response = (function () {
     return Response;
 }());
 exports.Response = Response;
-//# sourceMappingURL=/var/www/LambdaHandler/src/Response.js.map
+//# sourceMappingURL=/var/www/lambdahandler/src/Response.js.map
