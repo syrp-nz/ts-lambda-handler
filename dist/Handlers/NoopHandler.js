@@ -25,4 +25,4 @@ var NoopHandler = (function (_super) {
     return NoopHandler;
 }(AbstractHandler_1.AbstractHandler));
 exports.NoopHandler = NoopHandler;
-//# sourceMappingURL=/var/www/lambdahandler/src/Handlers/NoopHandler.js.map
+//# sourceMappingURL=/var/www/LambdaHandler/src/Handlers/NoopHandler.js.map

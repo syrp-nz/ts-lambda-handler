@@ -55,4 +55,4 @@ var CorsPolicy = (function () {
     return CorsPolicy;
 }());
 exports.CorsPolicy = CorsPolicy;
-//# sourceMappingURL=/var/www/lambdahandler/src/Config/CorsPolicy.js.map
+//# sourceMappingURL=/var/www/LambdaHandler/src/Config/CorsPolicy.js.map

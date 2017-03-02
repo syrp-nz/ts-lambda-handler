@@ -131,4 +131,4 @@ var Request = (function () {
     return Request;
 }());
 exports.Request = Request;
-//# sourceMappingURL=/var/www/lambdahandler/src/Request.js.map
+//# sourceMappingURL=/var/www/LambdaHandler/src/Request.js.map

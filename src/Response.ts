@@ -1,5 +1,6 @@
 import { ProxyCallback, ProxyResult } from 'aws-lambda';
 import { HttpError } from './Errors/HttpError';
+import { Buffer } from 'buffer';
 
 export class Response implements ProxyResult {
 
@@ -52,19 +53,32 @@ export class Response implements ProxyResult {
         return this;
     }
 
+    /**
+     * Receives something and try to convert it to a string for hte body.
+     * @param  {any}  body [description]
+     * @return {this}      [description]
+     */
     public setBody(body: any): this {
         const type: string = typeof body;
         switch (type) {
-            case 'null':
             case 'undefined':
                 this.body = null;
                 break;
             case 'string':
                 this.body = body;
                 break;
-            default:
-                this.body = JSON.stringify(body);
+            case 'array':
+            case 'object':
+                if (body instanceof Buffer) {
+                    this.body = body.toString('utf-8');
+                } else if (body === null) {
+                    this.body = null;
+                } else {
+                    this.body = JSON.stringify(body);
+                }
                 break;
+            default:
+                this.body = body.toString();
         }
 
         return this;

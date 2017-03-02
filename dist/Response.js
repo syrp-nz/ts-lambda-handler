@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var HttpError_1 = require("./Errors/HttpError");
+var buffer_1 = require("buffer");
 var Response = (function () {
     function Response(callback) {
         this.callback = callback;
@@ -47,19 +48,34 @@ var Response = (function () {
         }
         return this;
     };
+    /**
+     * Receives something and try to convert it to a string for hte body.
+     * @param  {any}  body [description]
+     * @return {this}      [description]
+     */
     Response.prototype.setBody = function (body) {
         var type = typeof body;
         switch (type) {
-            case 'null':
             case 'undefined':
                 this.body = null;
                 break;
             case 'string':
                 this.body = body;
                 break;
-            default:
-                this.body = JSON.stringify(body);
+            case 'array':
+            case 'object':
+                if (body instanceof buffer_1.Buffer) {
+                    this.body = body.toString('utf-8');
+                }
+                else if (body === null) {
+                    this.body = null;
+                }
+                else {
+                    this.body = JSON.stringify(body);
+                }
                 break;
+            default:
+                this.body = body.toString();
         }
         return this;
     };
@@ -80,4 +96,4 @@ var Response = (function () {
     return Response;
 }());
 exports.Response = Response;
-//# sourceMappingURL=/var/www/lambdahandler/src/Response.js.map
+//# sourceMappingURL=/var/www/LambdaHandler/src/Response.js.map

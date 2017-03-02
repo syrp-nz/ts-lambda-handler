@@ -29,4 +29,4 @@ var ValidationError = (function (_super) {
     return ValidationError;
 }(HttpError_1.HttpError));
 exports.ValidationError = ValidationError;
-//# sourceMappingURL=/var/www/lambdahandler/src/Errors/ValidationError.js.map
+//# sourceMappingURL=/var/www/LambdaHandler/src/Errors/ValidationError.js.map

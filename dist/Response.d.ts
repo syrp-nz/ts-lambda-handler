@@ -34,6 +34,11 @@ export declare class Response implements ProxyResult {
      * @return {this}
      */
     removeHeader(key: string): this;
+    /**
+     * Receives something and try to convert it to a string for hte body.
+     * @param  {any}  body [description]
+     * @return {this}      [description]
+     */
     setBody(body: any): this;
     send(): void;
     fail(error: Error): void;

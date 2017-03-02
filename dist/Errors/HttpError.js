@@ -28,4 +28,4 @@ var HttpError = (function (_super) {
     return HttpError;
 }(Error));
 exports.HttpError = HttpError;
-//# sourceMappingURL=/var/www/lambdahandler/src/Errors/HttpError.js.map
+//# sourceMappingURL=/var/www/LambdaHandler/src/Errors/HttpError.js.map
