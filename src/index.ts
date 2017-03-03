@@ -1,6 +1,7 @@
 import * as Config from './Config';
 import * as Errors from './Errors';
 import * as Handlers from './Handlers';
+import * as Utilities from './Utilities';
 
 
 import { Request } from './Request';
@@ -11,5 +12,6 @@ export {
     Errors,
     Handlers,
     Request,
-    Response
+    Response,
+    Utilities
 }

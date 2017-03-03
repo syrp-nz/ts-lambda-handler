@@ -14,8 +14,10 @@
   "license": "ISC",
   "dependencies": {
     "dynamodb-doc": "^1.0.0",
+    "fs-promise": "^2.0.0",
     "joi": "^10.2.0",
     "jsonwebtoken": "^7.2.1",
+    "mustache": "^2.3.0",
     "randomstring": "^1.1.5",
     "request": "^2.79.0",
     "request-promise": "^4.1.1",
