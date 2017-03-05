@@ -1,5 +1,4 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 var Request_1 = require("../Request");
 var Response_1 = require("../Response");
 var CorsPolicy_1 = require("../Config/CorsPolicy");
@@ -40,6 +39,7 @@ var AbstractHandler = (function () {
     AbstractHandler.prototype.init = function (event, context, callback) {
         this.request = new Request_1.Request(event);
         this.response = new Response_1.Response(callback);
+        this.context = context;
         if (this.config.cors) {
             var corsPolicy = new CorsPolicy_1.CorsPolicy(this.config.cors);
             var corsHeaders = corsPolicy.headers(this.request);

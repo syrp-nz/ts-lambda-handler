@@ -33,6 +33,7 @@ export abstract class AbstractHandler {
     protected init(event: APIGatewayEvent, context: Context, callback: ProxyCallback): void {
         this.request = new Request(event);
         this.response = new Response(callback);
+        this.context = context;
 
         if (this.config.cors) {
             const corsPolicy = new CorsPolicy(this.config.cors);
