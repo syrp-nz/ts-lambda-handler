@@ -1,1 +1,3 @@
-export { HandlerAuthorizer, UserInterface } from './HandlerAuthorizer';
+export { HandlerAuthorizer } from './HandlerAuthorizer';
+export { UserInterface } from './UserInterface';
+export { JWTAuthorizer } from './JWTAuthorizer';

@@ -1,6 +1,7 @@
 import { ForbiddenError } from '../Errors/ForbiddenError';
 import { UnauthorizedError } from '../Errors/UnauthorizedError';
 import { Request } from '../Request';
+import { UserInterface } from './UserInterface';
 
 /**
  * Represent a class that can determine if a user as the right to access a resource.
@@ -16,28 +17,11 @@ export interface HandlerAuthorizer {
     getUser(request: Request): Promise<UserInterface>;
 
     /**
-     * Retrieve the user associated to the given request.
+     * Confirm if the provided user as the appropriate priviledges to execute the provided request.
      * @param  {Request}           request [description]
      * @param  {UserInterface}
      * @throws {ForbiddenError}
      * @return {Promise<boolean>}       [description]
      */
-    isAuthorised(event: Request, user: UserInterface): Promise<void>;
-}
-
-/**
- * Represent a minimalist user object.
- */
-export interface UserInterface {
-    /**
-     * Unique identifier for the given user
-     * @type {string}
-     */
-    id:string;
-
-    /**
-     * Whatever the current user is anonymous.
-     * @type {boolean}
-     */
-    anonymous:boolean;
+    isAuthorised(request: Request, user: UserInterface): Promise<void>;
 }

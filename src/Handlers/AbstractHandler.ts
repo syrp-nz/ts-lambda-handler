@@ -4,8 +4,8 @@ import { Response } from '../Response';
 import { HttpError } from '../Errors/HttpError';
 import { HandlerConfig } from '../Config/HandlerConfig';
 import { CorsPolicy } from '../Config/CorsPolicy';
-import { HandlerAuthorizer, UserInterface } from '../Authorizers/HandlerAuthorizer';
-
+import { HandlerAuthorizer } from '../Authorizers/HandlerAuthorizer';
+import { UserInterface } from '../Authorizers/UserInterface';
 
 /**
  * Basic implementation of the Handler class. This is meant to provide an abstraction of an AWS request to facilitate the implementation of a Lambda function for a AWS Proxy request.

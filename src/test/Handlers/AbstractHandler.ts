@@ -55,7 +55,7 @@ class TestAuthorizer implements Lib.Authorizers.HandlerAuthorizer {
 
     getUser(event) {
         if (this.failUser) {
-            return Promise.reject(new Lib.Errors.UnauthorizedError([]));
+            return Promise.reject(new Lib.Errors.UnauthorizedError());
         } else {
             return Promise.resolve({id: '123', anonymouse: false})
         }
@@ -63,7 +63,7 @@ class TestAuthorizer implements Lib.Authorizers.HandlerAuthorizer {
 
     isAuthorised(event) {
         if (this.failAuthorization) {
-            return Promise.reject(new Lib.Errors.ForbiddenError([]));
+            return Promise.reject(new Lib.Errors.ForbiddenError());
         } else {
             return Promise.resolve();
         }
