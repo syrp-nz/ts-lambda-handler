@@ -1,3 +1,4 @@
+import * as Authorizers from './Authorizers';
 import * as Config from './Config';
 import * as Errors from './Errors';
 import * as Handlers from './Handlers';
@@ -8,6 +9,7 @@ import { Request } from './Request';
 import { Response } from './Response';
 
 export {
+    Authorizers,
     Config,
     Errors,
     Handlers,

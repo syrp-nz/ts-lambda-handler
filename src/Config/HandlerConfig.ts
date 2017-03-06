@@ -1,5 +1,6 @@
 import { SchemaMap } from 'joi';
 import { CorsPolicyRule } from './CorsPolicyRule';
+import { HandlerAuthorizer } from '../Authorizers';
 
 /**
  * Configuration settings for a Handler object.

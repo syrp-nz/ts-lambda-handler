@@ -4,6 +4,7 @@ import { Response } from '../Response';
 import { HttpError } from '../Errors/HttpError';
 import { HandlerConfig } from '../Config/HandlerConfig';
 import { CorsPolicy } from '../Config/CorsPolicy';
+import { HandlerAuthorizer, UserInterface } from '../Authorizers/HandlerAuthorizer';
 
 
 /**
@@ -15,6 +16,7 @@ export abstract class AbstractHandler {
     protected response: Response;
     protected context: Context;
     protected callback: ProxyCallback;
+    protected user: UserInterface = null;
 
     /**
      * Flag to confirm the init method has been called.
@@ -46,6 +48,26 @@ export abstract class AbstractHandler {
     }
 
     /**
+     * Determine if the current user can perform the current request. Return a promise that will return true if there's a valid authorizer assigned to this handler or false if there's no authorizer define for this handler.
+     *
+     * Invalid credentials will be handle via Promise rejection.
+     * @return {Promise<boolean>} [description]
+     */
+    protected authorize(): Promise<boolean> {
+        if (this.config.authorizer) {
+            return this.config.authorizer
+                .getUser(this.request)
+                .then((user) => {
+                    this.user = user;
+                    return this.config.authorizer.isAuthorised(this.request);
+                })
+                .then(() => Promise.resolve(true))
+        } else {
+            return Promise.resolve(false);
+        }
+    }
+
+    /**
      * Proxy Handler method to you provide to AWS.
      * @type {ProxyHandler}
      */
@@ -54,7 +76,10 @@ export abstract class AbstractHandler {
             this.init(event, context, callback);
             console.assert(this.isInit, 'Non-initialize Handler. Overridden init method on extended Handler must call parent.');
 
-            this.process(this.request, this.response);
+            this.authorize().then(() => {
+                this.process(this.request, this.response);
+            });
+
         } catch (error) {
             this.response.fail(error);
         }
