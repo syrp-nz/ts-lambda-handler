@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var Request_1 = require("../Request");
 var Response_1 = require("../Response");
 var CorsPolicy_1 = require("../Config/CorsPolicy");
@@ -10,6 +11,7 @@ var AbstractHandler = (function () {
         if (config === void 0) { config = {}; }
         var _this = this;
         this.config = config;
+        this.user = null;
         /**
          * Flag to confirm the init method has been called.
          * @type {boolean}
@@ -23,7 +25,9 @@ var AbstractHandler = (function () {
             try {
                 _this.init(event, context, callback);
                 console.assert(_this.isInit, 'Non-initialize Handler. Overridden init method on extended Handler must call parent.');
-                _this.process(_this.request, _this.response);
+                _this.authorize().then(function () {
+                    _this.process(_this.request, _this.response);
+                });
             }
             catch (error) {
                 _this.response.fail(error);
@@ -47,6 +51,27 @@ var AbstractHandler = (function () {
         }
         // Confirm the handler has been Initialize
         this.isInit = true;
+    };
+    /**
+     * Determine if the current user can perform the current request. Return a promise that will return true if there's a valid authorizer assigned to this handler or false if there's no authorizer define for this handler.
+     *
+     * Invalid credentials will be handle via Promise rejection.
+     * @return {Promise<boolean>} [description]
+     */
+    AbstractHandler.prototype.authorize = function () {
+        var _this = this;
+        if (this.config.authorizer) {
+            return this.config.authorizer
+                .getUser(this.request)
+                .then(function (user) {
+                _this.user = user;
+                return _this.config.authorizer.isAuthorised(_this.request);
+            })
+                .then(function () { return Promise.resolve(true); });
+        }
+        else {
+            return Promise.resolve(false);
+        }
     };
     return AbstractHandler;
 }());

@@ -2,6 +2,7 @@ import { ProxyHandler, APIGatewayEvent, Context, ProxyCallback } from 'aws-lambd
 import { Request } from '../Request';
 import { Response } from '../Response';
 import { HandlerConfig } from '../Config/HandlerConfig';
+import { UserInterface } from '../Authorizers/HandlerAuthorizer';
 /**
  * Basic implementation of the Handler class. This is meant to provide an abstraction of an AWS request to facilitate the implementation of a Lambda function for a AWS Proxy request.
  */
@@ -11,6 +12,7 @@ export declare abstract class AbstractHandler {
     protected response: Response;
     protected context: Context;
     protected callback: ProxyCallback;
+    protected user: UserInterface;
     /**
      * Flag to confirm the init method has been called.
      * @type {boolean}
@@ -24,6 +26,13 @@ export declare abstract class AbstractHandler {
      * @param  {ProxyCallback}   callback
      */
     protected init(event: APIGatewayEvent, context: Context, callback: ProxyCallback): void;
+    /**
+     * Determine if the current user can perform the current request. Return a promise that will return true if there's a valid authorizer assigned to this handler or false if there's no authorizer define for this handler.
+     *
+     * Invalid credentials will be handle via Promise rejection.
+     * @return {Promise<boolean>} [description]
+     */
+    protected authorize(): Promise<boolean>;
     /**
      * Proxy Handler method to you provide to AWS.
      * @type {ProxyHandler}
