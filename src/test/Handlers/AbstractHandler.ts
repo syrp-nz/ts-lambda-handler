@@ -40,7 +40,7 @@ class TestHandler extends Lib.Handlers.NoopHandler {
         it('authorize without an authorizer', () => {
             delete this.config.authorizer;
             this.user = null;
-            
+
             return this.authorize().then((data) => {
                 assert.isFalse(data);
                 assert.isNotOk(this.user);
@@ -73,7 +73,8 @@ class TestAuthorizer implements Lib.Authorizers.HandlerAuthorizer {
 
 describe('Handlers.AbstractHandler', () => {
     let handler: TestHandler = new TestHandler({authorizer: new TestAuthorizer(false, false)});
-
     handler.testAuthorize();
+
+
 
 });

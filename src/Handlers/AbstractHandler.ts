@@ -59,7 +59,7 @@ export abstract class AbstractHandler {
                 .getUser(this.request)
                 .then((user) => {
                     this.user = user;
-                    return this.config.authorizer.isAuthorised(this.request);
+                    return this.config.authorizer.isAuthorised(this.request, user);
                 })
                 .then(() => Promise.resolve(true))
         } else {

@@ -1,6 +1,6 @@
-import { APIGatewayEvent } from 'aws-lambda';
 import { ForbiddenError } from '../Errors/ForbiddenError';
 import { UnauthorizedError } from '../Errors/UnauthorizedError';
+import { Request } from '../Request';
 
 /**
  * Represent a class that can determine if a user as the right to access a resource.
@@ -9,19 +9,20 @@ export interface HandlerAuthorizer {
 
     /**
      * Retrieve the user associated to the given request.
-     * @param  {[type]}           event [description]
+     * @param  {Request}           request
      * @throws {UnauthorizedError}
      * @return {Promise<boolean>}       [description]
      */
-    getUser(event): Promise<UserInterface>;
+    getUser(request: Request): Promise<UserInterface>;
 
     /**
      * Retrieve the user associated to the given request.
-     * @param  {[type]}           event [description]
+     * @param  {Request}           request [description]
+     * @param  {UserInterface}
      * @throws {ForbiddenError}
      * @return {Promise<boolean>}       [description]
      */
-    isAuthorised(event): Promise<void>;
+    isAuthorised(event: Request, user: UserInterface): Promise<void>;
 }
 
 /**
