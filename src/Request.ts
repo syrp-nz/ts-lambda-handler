@@ -6,6 +6,7 @@ export class Request {
     constructor(protected event: APIGatewayEvent) {
         this.normalizeKeys(this.event.headers);
         this.normalizeKeys(this.event.queryStringParameters);
+        this.normalizeKeys(this.event.pathParameters);
     }
 
     public get data(): APIGatewayEvent {
@@ -35,6 +36,13 @@ export class Request {
     }
 
     /**
+     * Retrieve the method for this request.
+     */
+    public getMethod(): string {
+        return this.event.httpMethod.toUpperCase();
+    }
+
+    /**
      * Retrieve a query string parameter if it exists.
      * @param  {string}    key  Case Insensitive header key
      * @param  {string}    defaultVal Value to return if that header is undefined.
@@ -42,6 +50,20 @@ export class Request {
      */
     public getQueryStringParameter(key: string, defaultVal: string = ''): string {
         return this.getValue(this.event.queryStringParameters, key, defaultVal);
+    }
+
+    /**
+     * Retrieve a path parameter if it exists.
+     * @param  {string}    key  Case Insensitive header key
+     * @param  {string}    defaultVal Value to return if that header is undefined.
+     * @return {string}
+     */
+    public getPathParameter(key: string, defaultVal: string = ''): string {
+        return this.getValue(this.event.pathParameters, key, defaultVal);
+    }
+
+    public getResourceId(): string {
+        return this.getPathParameter('id');
     }
 
     /**
