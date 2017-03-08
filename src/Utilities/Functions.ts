@@ -25,7 +25,7 @@ export function decryptEnvVar(
 
     // If we don't specify a output variable name, then we'll just override the original value.
     if (!decryptedVarName) {
-        decryptedVarName = decryptedVarName;
+        decryptedVarName = cipherVarName;
     }
 
     // If we don't specify an encdoging default to base 64.
