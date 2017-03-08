@@ -8,6 +8,8 @@ import { HandlerAuthorizer } from '../Authorizers/HandlerAuthorizer';
 import { UserInterface } from '../Authorizers/UserInterface';
 import { decryptEnvVar } from '../Utilities/Functions';
 
+declare const process:any;
+
 /**
  * Basic implementation of the Handler class. This is meant to provide an abstraction of an AWS request to facilitate the implementation of a Lambda function for a AWS Proxy request.
  */
@@ -44,10 +46,13 @@ export abstract class AbstractHandler {
             this.response.addHeaders(corsHeaders);
         }
 
-        // Confirm the handler has been Initialize
-        this.isInit = true;
+        return this.decryptEnvVarsFromConfig().then(() => {
+            // Confirm the handler has been Initialize
+            this.isInit = true;
 
-        return this.decryptEnvVarsFromConfig();
+            return Promise.resolve();
+        });
+
     }
 
     /**
@@ -95,12 +100,15 @@ export abstract class AbstractHandler {
      */
     public handle: ProxyHandler = (event: APIGatewayEvent, context: Context, callback: ProxyCallback) => {
         try {
-            this.init(event, context, callback);
-            console.assert(this.isInit, 'Non-initialize Handler. Overridden init method on extended Handler must call parent.');
-
-            this.authorize().then(() => {
-                this.process(this.request, this.response);
-            });
+            this.init(event, context, callback)
+                .then(() => {
+                    console.assert(this.isInit, 'Non-initialize Handler. Overridden init method on extended Handler must call parent.');
+                    return this.authorize();
+                }).then(() => {
+                    this.process(this.request, this.response);
+                }).catch((error) => {
+                    this.response.fail(error);
+                });
 
         } catch (error) {
             this.response.fail(error);
