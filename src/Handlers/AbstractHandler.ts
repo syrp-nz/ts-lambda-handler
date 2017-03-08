@@ -6,6 +6,7 @@ import { HandlerConfig } from '../Config/HandlerConfig';
 import { CorsPolicy } from '../Config/CorsPolicy';
 import { HandlerAuthorizer } from '../Authorizers/HandlerAuthorizer';
 import { UserInterface } from '../Authorizers/UserInterface';
+import { decryptEnvVar } from '../Utilities/Functions';
 
 /**
  * Basic implementation of the Handler class. This is meant to provide an abstraction of an AWS request to facilitate the implementation of a Lambda function for a AWS Proxy request.
@@ -32,7 +33,7 @@ export abstract class AbstractHandler {
      * @param  {Context}         context
      * @param  {ProxyCallback}   callback
      */
-    protected init(event: APIGatewayEvent, context: Context, callback: ProxyCallback): void {
+    protected init(event: APIGatewayEvent, context: Context, callback: ProxyCallback): Promise<void> {
         this.request = new Request(event);
         this.response = new Response(callback);
         this.context = context;
@@ -45,6 +46,27 @@ export abstract class AbstractHandler {
 
         // Confirm the handler has been Initialize
         this.isInit = true;
+
+        return this.decryptEnvVarsFromConfig();
+    }
+
+    /**
+     * Decrypt some environement variables as specified in the COnfiguration for the Handler
+     * @return {Promise<void>} [description]
+     */
+    protected decryptEnvVarsFromConfig(): Promise<void> {
+        // Check if there's any variable to decrypt
+        if (this.config.encryptedEnvironmentVariables) {
+            // Convert the array of variables to decrypt to an array promises.
+            const promises = this.config.encryptedEnvironmentVariables.map((param) => {
+                return decryptEnvVar(param.cipherVarName, param.decryptedVarName, param.encoding);
+            });
+
+            // Return a promise that will resolve once all the variables have been decrypted.
+            return Promise.all(promises).then(() => Promise.resolve());
+        } else {
+            return Promise.resolve();
+        }
     }
 
     /**

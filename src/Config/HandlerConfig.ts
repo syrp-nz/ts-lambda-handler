@@ -17,8 +17,16 @@ export interface HandlerConfig {
     requestSchema?: SchemaMap;
 
     /**
-     * Determine if the current user can access the request. If not define, assume there's no restriction on the request.
-     * @type {[type]}
+     * Determines if the current user can access the request. If not define, assume there's no restriction on the request.
      */
     authorizer?: HandlerAuthorizer;
+
+    /**
+     * List of environement variables that should be decrypted.
+     */
+    encryptedEnvironmentVariables?: {
+        cipherVarName: string,
+        decryptedVarName?: string,
+        encoding?:string
+    }[];
 }
