@@ -69,7 +69,7 @@ export class JWTAuthorizer implements HandlerAuthorizer {
      * @return {Promise<boolean>}
      */
     public isAuthorised(request: Request, user: UserInterface): Promise<void>{
-        if (user.anonymous) {
+        if (user.anonymous && request.getMethod() != 'OPTIONS') {
             return Promise.reject(new ForbiddenError());
         } else {
             return Promise.resolve();

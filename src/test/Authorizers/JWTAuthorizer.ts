@@ -76,12 +76,22 @@ describe('Authorizers.JWTAuthorizer', () => {
         });
     });
 
+
     it('isAuthorised:ValidUser', () => {
         fakeEvent.headers['authorization'] = 'Bearer ' + validSig;
         const request = new Lib.Request(fakeEvent);
         return auth.getUser(request).then((user) => {
             return auth.isAuthorised(request, user)
         });
+    });
+
+    it('isAuthorised:Anonymous OPTIONS request', () => {
+        delete fakeEvent.headers['authorization'];
+        fakeEvent.httpMethod = 'OPTIONS';
+        const request = new Lib.Request(fakeEvent);
+        return auth.getUser(request).then((user) => {
+            return auth.isAuthorised(request, user)
+        })
     });
 
 });
