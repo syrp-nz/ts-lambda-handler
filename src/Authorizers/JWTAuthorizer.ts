@@ -21,6 +21,11 @@ export class JWTAuthorizer implements HandlerAuthorizer {
         protected attrMap: {[key: string]: string} = {}
     ) {}
 
+    protected getSecret(): string {
+        return this.secret;
+    }
+
+
     /**
      * Retrieve the user associated to the given request.
      * @param  {Request}           request [description]
@@ -45,9 +50,10 @@ export class JWTAuthorizer implements HandlerAuthorizer {
             return Promise.reject(new UnauthorizedError());
         }
 
+
         const signature = matches[1];
         try {
-            let payload = JWT.verify(signature, this.secret);
+            let payload = JWT.verify(signature, this.getSecret());
             const user = this.extractValues(payload);
             return Promise.resolve(Object.assign(payload, user));
         } catch (error) {
