@@ -89,11 +89,11 @@ export class Response implements ProxyResult {
         this.callback(null, this);
     }
 
-    public fail(error: Error): void {
-        if (error instanceof HttpError) {
-            const httpError = <HttpError>error;
-            this.statusCode = httpError.statusCode;
-            this.setBody(httpError.body());
+    public fail(error): void {
+        console.dir(error.body);
+        if (error.statusCode != undefined && error.body != undefined) {
+            this.statusCode = error.statusCode;
+            this.setBody(error.body);
             this.send();
         } else {
             this.callback(error);

@@ -9,15 +9,11 @@ import { HttpError } from './HttpError';
 export class UnauthorizedError extends HttpError {
 
     constructor() {
-        super('UnauthorizedError', 401);
-    }
-
-    public body(): ValidationErrorItem[] {
-        return [{
+        super('UnauthorizedError', 401,  [{
             message: 'UnauthorizedError',
             type: 'UnauthorizedError',
             path: ''
-        }];
+        }]);
     }
 
 }

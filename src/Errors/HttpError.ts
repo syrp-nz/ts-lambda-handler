@@ -3,12 +3,8 @@
  */
 export class HttpError extends Error {
 
-    constructor(public message, public statusCode: number = 500) {
+    constructor(public message, public statusCode: number = 500, public body = null) {
         super(message);
-    }
-
-    public body(): any {
-        return null;
     }
 
 }

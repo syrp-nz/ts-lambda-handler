@@ -9,11 +9,7 @@ import { HttpError } from './HttpError';
 export class ValidationError extends HttpError {
 
     constructor(protected details: ValidationErrorItem[]) {
-        super('ValidationError', 400);
-    }
-
-    public body(): any {
-        return this.details;
+        super('ValidationError', 400, details);
     }
 
 }
