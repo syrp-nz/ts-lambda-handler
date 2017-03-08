@@ -29,39 +29,42 @@ export abstract class DynamoHandler extends AbstractHandler {
     protected expressionAttributeValues: Map<any> = {};
 
 
-    public process(request:Request, response:Response) {
+    public process(request:Request, response:Response): Promise<void> {
         switch (request.getMethod()) {
             case "GET":
                 if (request.getResourceId()) {
 
                 } else {
-                    this.search();
+                    return this.search();
                 }
+                break;
             case "OPTIONS":
                 response.send();
                 break;
         }
     }
 
-    protected search() {
+    protected search(): Promise<void> {
         this.searchValidation();
         const param = this.initSearch();
 
         const client = new DynamoDB.DocumentClient();
-        client.query(param).promise().then(this.formatSearchResult);
+        return client.query(param).promise().then((results) => this.formatSearchResult(results));
     }
 
     /**
      * Validate the Query string for its suitability for a search request.
      * @return {[type]} [description]
      */
-    protected searchValidation() {
+    protected searchValidation(): Promise<void> {
         const result = JOI.validate(
             this.request.data.queryStringParameters,
             JOI.object().keys(this.searchValidationSchema())
         );
         if (result.error) {
-            throw new ValidationError(result.error.details);
+            return Promise.reject(new ValidationError(result.error.details));
+        } else {
+            return Promise.resolve();
         }
     }
 
@@ -73,15 +76,23 @@ export abstract class DynamoHandler extends AbstractHandler {
     }
 
     protected initSearch(): DynamoDB.QueryInput {
-        return {
+        const params: DynamoDB.QueryInput = {
             TableName: this.table,
             Limit: parseInt(this.request.getQueryStringParameter('limit', this.defaultLimit.toString())),
             IndexName: this.indexName,
             KeyConditionExpression: this.getKeyConditionExpression(),
-            FilterExpression: this.getFilterExpression(),
-            ExpressionAttributeNames: this.expressionAttributeNames,
-            ExpressionAttributeValues: this.expressionAttributeValues
+            FilterExpression: this.getFilterExpression()
         };
+
+        if (Object.keys(this.expressionAttributeNames).length > 0) {
+            params.ExpressionAttributeNames = this.expressionAttributeNames;
+        }
+
+        if (Object.keys(this.expressionAttributeValues).length > 0) {
+            params.ExpressionAttributeValues = this.expressionAttributeValues;
+        }
+
+        return params;
     }
 
     /**
@@ -111,8 +122,9 @@ export abstract class DynamoHandler extends AbstractHandler {
         this.expressionAttributeValues[key] = value;
     }
 
-    protected formatSearchResult(results: DynamoDB.QueryOutput) {
+    protected formatSearchResult(results: DynamoDB.QueryOutput): Promise<void> {
         this.response.setBody(results).send();
+        return Promise.resolve();
     }
 
 }

@@ -7,8 +7,9 @@ import { Response } from '../Response';
  */
 export class NoopHandler extends AbstractHandler {
 
-    public process(request:Request, response:Response) {
+    public process(request:Request, response:Response): Promise<void> {
         response.send();
+        return Promise.resolve();
     }
 
 }

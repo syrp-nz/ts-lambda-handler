@@ -105,7 +105,7 @@ export abstract class AbstractHandler {
                     console.assert(this.isInit, 'Non-initialize Handler. Overridden init method on extended Handler must call parent.');
                     return this.authorize();
                 }).then(() => {
-                    this.process(this.request, this.response);
+                    return this.process(this.request, this.response);
                 }).catch((error) => {
                     this.response.fail(error);
                 });
@@ -120,5 +120,5 @@ export abstract class AbstractHandler {
      * @param {Request}  request
      * @param {Response} response
      */
-    public abstract process(request: Request, response: Response): void;
+    public abstract process(request: Request, response: Response): Promise<void>;
 }
