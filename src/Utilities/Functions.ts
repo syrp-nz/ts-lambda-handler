@@ -46,5 +46,18 @@ export function decryptEnvVar(
         return Promise.resolve();
     });
 
-
 };
+
+/**
+ * Print a message if the `LAMBDA_HANDLER_DEBUG` flag is set on `process.env`.
+ * @param {any} message [description]
+ */
+export function print_debug(message:any):void {
+    if (process && process.env && process.env.LAMBDA_HANDLER_DEBUG) {
+        if (typeof message == 'string') {
+            console.log(message);
+        } else {
+            console.dir(message);
+        }
+    }
+}

@@ -1,6 +1,9 @@
 import { ProxyCallback, ProxyResult } from 'aws-lambda';
 import { HttpError } from './Errors/HttpError';
 import { Buffer } from 'buffer';
+import { print_debug } from './Utilities/Functions';
+
+declare const process:any;
 
 export class Response implements ProxyResult {
 
@@ -90,10 +93,10 @@ export class Response implements ProxyResult {
     }
 
     public fail(error): void {
-        console.dir(error.body);
-        if (error.statusCode != undefined && error.body != undefined) {
+        print_debug(error);
+        if (error.statusCode != undefined) {
             this.statusCode = error.statusCode;
-            this.setBody(error.body);
+            this.setBody(error.body ? error.body : null);
             this.send();
         } else {
             this.callback(error);
