@@ -45,11 +45,12 @@ export abstract class DynamoHandler extends AbstractHandler {
     }
 
     protected search(): Promise<void> {
-        this.searchValidation();
-        const param = this.initSearch();
+        return this.searchValidation().then(() => {
+            const param = this.initSearch();
 
-        const client = new DynamoDB.DocumentClient();
-        return client.query(param).promise().then((results) => this.formatSearchResult(results));
+            const client = new DynamoDB.DocumentClient();
+            return client.query(param).promise().then((results) => this.formatSearchResult(results));
+        });
     }
 
     /**
