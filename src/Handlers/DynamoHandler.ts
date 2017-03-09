@@ -16,9 +16,20 @@ export abstract class DynamoHandler extends AbstractHandler {
      */
     protected abstract table:string;
 
+    /**
+     * Index to use when searching for results. If left blank search will be executed against the main table.
+     */
     protected indexName:string = undefined;
 
+    /**
+     * The default number of results to return.
+     */
     protected defaultLimit:number = 20;
+
+    /**
+     * The default list of fields to return. If left empty, all projected fields will be return.
+     */
+    protected defaultFields:string[] = [];
 
     /**
      * The search index that will be used for the general listing GET request. Leave blank if you want to use the default index.
@@ -55,7 +66,7 @@ export abstract class DynamoHandler extends AbstractHandler {
 
     /**
      * Validate the Query string for its suitability for a search request.
-     * @return {[type]} [description]
+     * @return {[type]}
      */
     protected searchValidation(): Promise<void> {
         const result = JOI.validate(
@@ -82,7 +93,8 @@ export abstract class DynamoHandler extends AbstractHandler {
             Limit: parseInt(this.request.getQueryStringParameter('limit', this.defaultLimit.toString())),
             IndexName: this.indexName,
             KeyConditionExpression: this.getKeyConditionExpression(),
-            FilterExpression: this.getFilterExpression()
+            FilterExpression: this.getFilterExpression(),
+            ExclusiveStartKey: this.getExclusiveStartKey()
         };
 
         if (Object.keys(this.expressionAttributeNames).length > 0) {
@@ -91,6 +103,19 @@ export abstract class DynamoHandler extends AbstractHandler {
 
         if (Object.keys(this.expressionAttributeValues).length > 0) {
             params.ExpressionAttributeValues = this.expressionAttributeValues;
+        }
+
+        const projectionExp = this.getProjectionExpression();
+        switch(projectionExp) {
+            case '*':
+                params.Select = 'ALL_ATTRIBUTES';
+                break;
+            case '':
+                params.Select = 'ALL_PROJECTED_ATTRIBUTES';
+                break;
+            default:
+                params.Select = 'SPECIFIC_ATTRIBUTES';
+                params.ProjectionExpression = projectionExp;
         }
 
         return params;
@@ -115,12 +140,34 @@ export abstract class DynamoHandler extends AbstractHandler {
         return undefined;
     }
 
+    /**
+     * Add an expression to the ExpressionAttributeNames list for the Dynamo Request.
+     * @param  {string} key
+     * @param  {string} value
+     */
     protected addExpAttrName(key:string, value:string) {
         this.expressionAttributeNames[key] = value;
     }
 
+    /**
+     * Add an expression to the ExpressionAttributeValues attributes for the Dynamo Request.
+     * @param  {string} key
+     * @param  {string} value
+     */
     protected addExpAttrValue(key:string, value:any) {
         this.expressionAttributeValues[key] = value;
+    }
+
+    /**
+     * Define what field should be returned. This is controlled by the `defaultFields` property. If '*' is returned, all attributes will be returned. If the return value is empty, all projected attributes will be returned. If a comma seperated list of field is returned, only those fields will be returned.
+     * @return {string}
+     */
+    protected getProjectionExpression(): string {
+        if (this.defaultFields.length > 0) {
+            return this.defaultFields.join(',');
+        } else {
+            return '';
+        }
     }
 
     protected formatSearchResult(results: DynamoDB.QueryOutput): Promise<void> {
