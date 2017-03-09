@@ -1,12 +1,12 @@
 import { ProxyHandler, APIGatewayEvent, Context, ProxyCallback } from 'aws-lambda';
 import { Request } from '../Request';
 import { Response } from '../Response';
-import { HttpError } from '../Errors/HttpError';
+import { InternalServerError } from '../Errors/InternalServerError';
 import { HandlerConfig } from '../Config/HandlerConfig';
 import { CorsPolicy } from '../Config/CorsPolicy';
 import { HandlerAuthorizer } from '../Authorizers/HandlerAuthorizer';
 import { UserInterface } from '../Authorizers/UserInterface';
-import { decryptEnvVar } from '../Utilities/Functions';
+import { decryptEnvVar, print_debug } from '../Utilities/Functions';
 
 declare const process:any;
 
@@ -106,12 +106,10 @@ export abstract class AbstractHandler {
                     return this.authorize();
                 }).then(() => {
                     return this.process(this.request, this.response);
-                }).catch((error) => {
-                    this.response.fail(error);
-                });
+                }).catch((error) => {this.errorHandler(error)});
 
         } catch (error) {
-            this.response.fail(error);
+            this.errorHandler(error);
         }
     }
 
@@ -121,4 +119,19 @@ export abstract class AbstractHandler {
      * @param {Response} response
      */
     public abstract process(request: Request, response: Response): Promise<void>;
+
+
+    protected errorHandler(error): void {
+        if (error.passthrough) {
+            this.response.fail(error);
+        } else {
+            print_debug(error);
+            this.response.fail(new InternalServerError({
+                'Region': process.env.AWS_REGION,
+                'Function': this.context.functionName,
+                'Name': this.context.logStreamName,
+                'Request': this.context.awsRequestId,
+            }));
+        }
+    }
 }

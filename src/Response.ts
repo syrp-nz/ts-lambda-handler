@@ -94,7 +94,7 @@ export class Response implements ProxyResult {
 
     public fail(error): void {
         print_debug(error);
-        if (error.statusCode != undefined) {
+        if (error.passthrough) {
             this.statusCode = error.statusCode;
             this.setBody(error.body ? error.body : null);
             this.send();
