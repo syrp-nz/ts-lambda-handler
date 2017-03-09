@@ -32,6 +32,16 @@ export abstract class DynamoHandler extends AbstractHandler {
     protected defaultFields:string[] = [];
 
     /**
+     * Those fields will never be returned to the client. Fields you might want to include here could be a salt or a
+     * password hash. You definitely don't need to include a password field in here, because you are a good developer
+     * who always hash passwords using a one-way cryptographically strong hashing algorithm and would never consider
+     * for the life of them storing plain text password.
+     *
+     * Values may be provdied using a dot notation. e.g.: topObject.childrenObject.propertyToRemove
+     */
+    protected blacklistedFields:string[] = [];
+
+    /**
      * The search index that will be used for the general listing GET request. Leave blank if you want to use the default index.
      */
     protected searchIndex:string = '';
@@ -60,7 +70,12 @@ export abstract class DynamoHandler extends AbstractHandler {
             const param = this.initSearch();
 
             const client = new DynamoDB.DocumentClient();
-            return client.query(param).promise().then((results) => this.formatSearchResult(results));
+            return client.query(param).promise()
+                .then((results) => this.formatSearchResult(results))
+                .then((formattedResults) => {
+                    this.response.setBody(formattedResults).send();
+                    return Promise.resolve();
+                });
         });
     }
 
@@ -170,9 +185,48 @@ export abstract class DynamoHandler extends AbstractHandler {
         }
     }
 
-    protected formatSearchResult(results: DynamoDB.QueryOutput): Promise<void> {
-        this.response.setBody(results).send();
-        return Promise.resolve();
+    /**
+     * Receives results from a Dynamo Query and format them so they are suitable for our purposes. Out of the box it
+     * removes the count and scanned count values. It also calls scrubData to remove any black listed fields.
+     *
+     * Child object can override this method if they require further formatting of the output.
+     * @param  {DynamoDB.QueryOutput} results [description]
+     * @return {Promise<any>}                 [description]
+     */
+    protected formatSearchResult(results: DynamoDB.QueryOutput): Promise<any> {
+        results.Items.forEach((item) => {this.scrubData(item)});
+        delete results.Count;
+        delete results.ScannedCount;
+        return Promise.resolve(results);
+    }
+
+    /**
+     * Remove all black listed fields from the item.
+     * @param  {any} item
+     * @return {any}
+     */
+    protected scrubData(item:any): any {
+        for (let fieldPath of this.blacklistedFields) {
+            this.removeItem(item, fieldPath.split('.'));
+        }
+
+        return item;
+    }
+
+    /**
+     * Recursive method that remove the given property as defined by the path from the item.
+     * @param  {any}      item
+     * @param  {string[]} path
+     */
+    protected removeItem(item:any, path:string[]) {
+        const fieldName = path.shift();
+        if (item[fieldName]) {
+            if (path.length == 0) {
+                delete item[fieldName];
+            } else {
+                this.removeItem(item[fieldName], path);
+            }
+        }
     }
 
 }
