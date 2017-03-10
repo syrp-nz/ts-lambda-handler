@@ -12,18 +12,20 @@ var __extends = (this && this.__extends) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 var HttpError_1 = require("./HttpError");
 /**
- * Represents an error raised by a validation issue with the client input.
+ * Represents an error raised when an unauthenticated user attempts to acccess a restricted resource.
  *
- * Will cause a 400 Bad Request to be sent to the client.
+ * Will cause a 401 Unauthorized response to be sent to the client.
  */
-var ValidationError = (function (_super) {
-    __extends(ValidationError, _super);
-    function ValidationError(details) {
-        var _this = _super.call(this, 'ValidationError', 400, details) || this;
-        _this.details = details;
-        return _this;
+var UnauthorizedError = (function (_super) {
+    __extends(UnauthorizedError, _super);
+    function UnauthorizedError() {
+        return _super.call(this, 'UnauthorizedError', 401, [{
+                message: 'UnauthorizedError',
+                type: 'UnauthorizedError',
+                path: ''
+            }]) || this;
     }
-    return ValidationError;
+    return UnauthorizedError;
 }(HttpError_1.HttpError));
-exports.ValidationError = ValidationError;
-//# sourceMappingURL=/var/www/LambdaHandler/src/Errors/ValidationError.js.map
+exports.UnauthorizedError = UnauthorizedError;
+//# sourceMappingURL=/var/www/LambdaHandler/src/Errors/UnauthorizedError.js.map

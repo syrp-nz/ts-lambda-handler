@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var HttpError_1 = require("./Errors/HttpError");
 var buffer_1 = require("buffer");
+var Functions_1 = require("./Utilities/Functions");
 var Response = (function () {
     function Response(callback) {
         this.callback = callback;
@@ -83,10 +83,10 @@ var Response = (function () {
         this.callback(null, this);
     };
     Response.prototype.fail = function (error) {
-        if (error instanceof HttpError_1.HttpError) {
-            var httpError = error;
-            this.statusCode = httpError.statusCode;
-            this.setBody(httpError.body());
+        Functions_1.print_debug(error);
+        if (error.passthrough) {
+            this.statusCode = error.statusCode;
+            this.setBody(error.body ? error.body : null);
             this.send();
         }
         else {

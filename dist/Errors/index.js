@@ -8,4 +8,6 @@ var ForbiddenError_1 = require("./ForbiddenError");
 exports.ForbiddenError = ForbiddenError_1.ForbiddenError;
 var UnauthorizedError_1 = require("./UnauthorizedError");
 exports.UnauthorizedError = UnauthorizedError_1.UnauthorizedError;
+var InternalServerError_1 = require("./InternalServerError");
+exports.InternalServerError = InternalServerError_1.InternalServerError;
 //# sourceMappingURL=/var/www/LambdaHandler/src/Errors/index.js.map

@@ -41,5 +41,5 @@ export declare class Response implements ProxyResult {
      */
     setBody(body: any): this;
     send(): void;
-    fail(error: Error): void;
+    fail(error: any): void;
 }

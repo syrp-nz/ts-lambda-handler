@@ -2,7 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var Request_1 = require("../Request");
 var Response_1 = require("../Response");
+var InternalServerError_1 = require("../Errors/InternalServerError");
 var CorsPolicy_1 = require("../Config/CorsPolicy");
+var Functions_1 = require("../Utilities/Functions");
 /**
  * Basic implementation of the Handler class. This is meant to provide an abstraction of an AWS request to facilitate the implementation of a Lambda function for a AWS Proxy request.
  */
@@ -23,14 +25,16 @@ var AbstractHandler = (function () {
          */
         this.handle = function (event, context, callback) {
             try {
-                _this.init(event, context, callback);
-                console.assert(_this.isInit, 'Non-initialize Handler. Overridden init method on extended Handler must call parent.');
-                _this.authorize().then(function () {
-                    _this.process(_this.request, _this.response);
-                });
+                _this.init(event, context, callback)
+                    .then(function () {
+                    console.assert(_this.isInit, 'Non-initialize Handler. Overridden init method on extended Handler must call parent.');
+                    return _this.authorize();
+                }).then(function () {
+                    return _this.process(_this.request, _this.response);
+                }).catch(function (error) { _this.errorHandler(error); });
             }
             catch (error) {
-                _this.response.fail(error);
+                _this.errorHandler(error);
             }
         };
     }
@@ -41,6 +45,7 @@ var AbstractHandler = (function () {
      * @param  {ProxyCallback}   callback
      */
     AbstractHandler.prototype.init = function (event, context, callback) {
+        var _this = this;
         this.request = new Request_1.Request(event);
         this.response = new Response_1.Response(callback);
         this.context = context;
@@ -49,8 +54,29 @@ var AbstractHandler = (function () {
             var corsHeaders = corsPolicy.headers(this.request);
             this.response.addHeaders(corsHeaders);
         }
-        // Confirm the handler has been Initialize
-        this.isInit = true;
+        return this.decryptEnvVarsFromConfig().then(function () {
+            // Confirm the handler has been Initialize
+            _this.isInit = true;
+            return Promise.resolve();
+        });
+    };
+    /**
+     * Decrypt some environement variables as specified in the COnfiguration for the Handler
+     * @return {Promise<void>} [description]
+     */
+    AbstractHandler.prototype.decryptEnvVarsFromConfig = function () {
+        // Check if there's any variable to decrypt
+        if (this.config.encryptedEnvironmentVariables) {
+            // Convert the array of variables to decrypt to an array promises.
+            var promises = this.config.encryptedEnvironmentVariables.map(function (param) {
+                return Functions_1.decryptEnvVar(param.cipherVarName, param.decryptedVarName, param.encoding);
+            });
+            // Return a promise that will resolve once all the variables have been decrypted.
+            return Promise.all(promises).then(function () { return Promise.resolve(); });
+        }
+        else {
+            return Promise.resolve();
+        }
     };
     /**
      * Determine if the current user can perform the current request. Return a promise that will return true if there's a valid authorizer assigned to this handler or false if there's no authorizer define for this handler.
@@ -65,12 +91,26 @@ var AbstractHandler = (function () {
                 .getUser(this.request)
                 .then(function (user) {
                 _this.user = user;
-                return _this.config.authorizer.isAuthorised(_this.request);
+                return _this.config.authorizer.isAuthorised(_this.request, user);
             })
                 .then(function () { return Promise.resolve(true); });
         }
         else {
             return Promise.resolve(false);
+        }
+    };
+    AbstractHandler.prototype.errorHandler = function (error) {
+        if (error.passthrough) {
+            this.response.fail(error);
+        }
+        else {
+            Functions_1.print_debug(error);
+            this.response.fail(new InternalServerError_1.InternalServerError({
+                'Region': process.env.AWS_REGION,
+                'Function': this.context.functionName,
+                'Name': this.context.logStreamName,
+                'Request': this.context.awsRequestId,
+            }));
         }
     };
     return AbstractHandler;

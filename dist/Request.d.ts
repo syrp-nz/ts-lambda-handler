@@ -18,12 +18,24 @@ export declare class Request {
      */
     getHeader(key: string, defaultVal?: string): string;
     /**
+     * Retrieve the method for this request.
+     */
+    getMethod(): string;
+    /**
      * Retrieve a query string parameter if it exists.
      * @param  {string}    key  Case Insensitive header key
      * @param  {string}    defaultVal Value to return if that header is undefined.
      * @return {string}
      */
     getQueryStringParameter(key: string, defaultVal?: string): string;
+    /**
+     * Retrieve a path parameter if it exists.
+     * @param  {string}    key  Case Insensitive header key
+     * @param  {string}    defaultVal Value to return if that header is undefined.
+     * @return {string}
+     */
+    getPathParameter(key: string, defaultVal?: string): string;
+    getResourceId(): string;
     /**
      * Retrieve a specific value from an array or return a default value.
      * @param  {[key:string]: string}    list

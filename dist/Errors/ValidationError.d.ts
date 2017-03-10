@@ -8,5 +8,4 @@ import { HttpError } from './HttpError';
 export declare class ValidationError extends HttpError {
     protected details: ValidationErrorItem[];
     constructor(details: ValidationErrorItem[]);
-    body(): any;
 }

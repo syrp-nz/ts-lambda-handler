@@ -6,6 +6,7 @@ var Request = (function () {
         this.event = event;
         this.normalizeKeys(this.event.headers);
         this.normalizeKeys(this.event.queryStringParameters);
+        this.normalizeKeys(this.event.pathParameters);
     }
     Object.defineProperty(Request.prototype, "data", {
         get: function () {
@@ -36,6 +37,12 @@ var Request = (function () {
         return this.getValue(this.event.headers, key, defaultVal);
     };
     /**
+     * Retrieve the method for this request.
+     */
+    Request.prototype.getMethod = function () {
+        return this.event.httpMethod.toUpperCase();
+    };
+    /**
      * Retrieve a query string parameter if it exists.
      * @param  {string}    key  Case Insensitive header key
      * @param  {string}    defaultVal Value to return if that header is undefined.
@@ -44,6 +51,19 @@ var Request = (function () {
     Request.prototype.getQueryStringParameter = function (key, defaultVal) {
         if (defaultVal === void 0) { defaultVal = ''; }
         return this.getValue(this.event.queryStringParameters, key, defaultVal);
+    };
+    /**
+     * Retrieve a path parameter if it exists.
+     * @param  {string}    key  Case Insensitive header key
+     * @param  {string}    defaultVal Value to return if that header is undefined.
+     * @return {string}
+     */
+    Request.prototype.getPathParameter = function (key, defaultVal) {
+        if (defaultVal === void 0) { defaultVal = ''; }
+        return this.getValue(this.event.pathParameters, key, defaultVal);
+    };
+    Request.prototype.getResourceId = function () {
+        return this.getPathParameter('id');
     };
     /**
      * Retrieve a specific value from an array or return a default value.

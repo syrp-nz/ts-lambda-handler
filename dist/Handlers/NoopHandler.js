@@ -21,6 +21,7 @@ var NoopHandler = (function (_super) {
     }
     NoopHandler.prototype.process = function (request, response) {
         response.send();
+        return Promise.resolve();
     };
     return NoopHandler;
 }(AbstractHandler_1.AbstractHandler));
