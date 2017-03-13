@@ -62,6 +62,17 @@ export class Request {
         return this.getValue(this.event.pathParameters, key, defaultVal);
     }
 
+    /**
+     * Retrieve a stage variable if it exists. The key for is case sensitive for this function unlike the other get
+     * functions.
+     * @param  {string}    key  Case sensitive key
+     * @param  {string}    defaultVal Value to return if that header is undefined.
+     * @return {string}
+     */
+    public getStageVariable(key: string, defaultVal: string = ''): string {
+        return this.getValue(this.event.stageVariables, key, defaultVal);
+    }
+
     public getResourceId(): string {
         return this.getPathParameter('id');
     }
