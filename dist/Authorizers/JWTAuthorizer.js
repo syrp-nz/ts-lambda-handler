@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var ForbiddenError_1 = require("../Errors/ForbiddenError");
 var UnauthorizedError_1 = require("../Errors/UnauthorizedError");
 var JWT = require("jsonwebtoken");

@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var buffer_1 = require("buffer");
 var aws_sdk_1 = require("aws-sdk");
 /**

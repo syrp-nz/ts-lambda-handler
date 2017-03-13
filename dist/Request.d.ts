@@ -49,11 +49,12 @@ export declare class Request {
      * @param  {[key:string]: string}    list
      * @param  {string}    key  Case Insensitive header key
      * @param  {string}    defaultVal Value to return if that header is undefined.
+     * @param  {boolean}   lcKey Whatever the key should be lowercase before trying to find the value.
      * @return {string}
      */
     protected getValue(list: {
         [key: string]: string;
-    }, key: string, defaultVal: string): string;
+    }, key: string, defaultVal: string, lcKey?: boolean): string;
     /**
      * Retrieve the content-type of this request as defined by the content-type header.
      * @return {string}

@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var buffer_1 = require("buffer");
 var Functions_1 = require("./Utilities/Functions");
 var Response = (function () {
