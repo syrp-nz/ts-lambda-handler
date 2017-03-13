@@ -1,5 +1,4 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 var Request_1 = require("../Request");
 var Response_1 = require("../Response");
 var InternalServerError_1 = require("../Errors/InternalServerError");

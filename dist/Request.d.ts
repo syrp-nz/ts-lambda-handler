@@ -35,6 +35,14 @@ export declare class Request {
      * @return {string}
      */
     getPathParameter(key: string, defaultVal?: string): string;
+    /**
+     * Retrieve a stage variable if it exists. The key for is case sensitive for this function unlike the other get
+     * functions.
+     * @param  {string}    key  Case sensitive key
+     * @param  {string}    defaultVal Value to return if that header is undefined.
+     * @return {string}
+     */
+    getStageVariable(key: string, defaultVal?: string): string;
     getResourceId(): string;
     /**
      * Retrieve a specific value from an array or return a default value.

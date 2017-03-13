@@ -1,5 +1,4 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 var Url = require("url");
 var Request = (function () {
     function Request(event) {
@@ -61,6 +60,17 @@ var Request = (function () {
     Request.prototype.getPathParameter = function (key, defaultVal) {
         if (defaultVal === void 0) { defaultVal = ''; }
         return this.getValue(this.event.pathParameters, key, defaultVal);
+    };
+    /**
+     * Retrieve a stage variable if it exists. The key for is case sensitive for this function unlike the other get
+     * functions.
+     * @param  {string}    key  Case sensitive key
+     * @param  {string}    defaultVal Value to return if that header is undefined.
+     * @return {string}
+     */
+    Request.prototype.getStageVariable = function (key, defaultVal) {
+        if (defaultVal === void 0) { defaultVal = ''; }
+        return this.getValue(this.event.stageVariables, key, defaultVal);
     };
     Request.prototype.getResourceId = function () {
         return this.getPathParameter('id');
