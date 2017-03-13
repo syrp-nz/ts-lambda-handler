@@ -34,6 +34,17 @@ describe('Request', () => {
         assert.equal(request.getQueryStringParameter('limit', '20'), '20');
     });
 
+    it( 'getStageVariable', () => {
+        assert.equal(request.getStageVariable('key1'), 'value');
+        assert.equal(request.getStageVariable('KEY1'), '');
+        assert.equal(request.getStageVariable('HeLLo'), 'world');
+        assert.equal(request.getStageVariable('hEllO'), '');
+        assert.equal(request.getStageVariable('FOO'), 'BAR');
+        assert.equal(request.getStageVariable('foo'), '');
+        assert.equal(request.getStageVariable('doesnotexist'), '');
+        assert.equal(request.getStageVariable('limit', '20'), '20');
+    });
+
     it ('getContentType', () => {
         fakeEvent.headers['content-type'] = 'text/plain';
         request = new Lib.Request(fakeEvent);

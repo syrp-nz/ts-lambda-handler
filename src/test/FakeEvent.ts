@@ -41,7 +41,11 @@ export const fakeEvent: APIGatewayEvent = {
         "FOO": "BAR",
     },
     "pathParameters":null,
-    "stageVariables":null,
+    "stageVariables": {
+        "key1": "value",
+        "HeLLo": "world",
+        "FOO": "BAR",
+    },
     "requestContext":{
         "accountId":"493938364882",
         "resourceId":"am2ulm",

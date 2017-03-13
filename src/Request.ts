@@ -70,7 +70,7 @@ export class Request {
      * @return {string}
      */
     public getStageVariable(key: string, defaultVal: string = ''): string {
-        return this.getValue(this.event.stageVariables, key, defaultVal);
+        return this.getValue(this.event.stageVariables, key, defaultVal, false);
     }
 
     public getResourceId(): string {
@@ -82,10 +82,14 @@ export class Request {
      * @param  {[key:string]: string}    list
      * @param  {string}    key  Case Insensitive header key
      * @param  {string}    defaultVal Value to return if that header is undefined.
+     * @param  {boolean}   lcKey Whatever the key should be lowercase before trying to find the value.
      * @return {string}
      */
-    protected getValue(list: {[key:string]: string}, key: string, defaultVal: string): string {
-        key = key.toLowerCase();
+    protected getValue(list: {[key:string]: string}, key: string, defaultVal: string, lcKey:boolean = true): string {
+        if (lcKey) {
+            key = key.toLowerCase();
+        }
+
         if (list && list[key] != undefined) {
             return list[key];
         } else {
