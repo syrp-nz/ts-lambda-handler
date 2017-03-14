@@ -25,15 +25,16 @@
     "uniqid": "^4.1.1"
   },
   "devDependencies": {
-    "@types/chai": "^3.4.34",
-    "@types/jasmine": "^2.5.43",
-    "aws-sdk-mock": "^1.6.1",
-    "chai": "^3.5.0",
     "@djabry/aws-sdk-typescript": "0.0.11",
     "@types/aws-lambda": "^0.0.7",
+    "@types/chai": "^3.4.34",
     "@types/crypto-js": "^3.1.33",
-    "@types/node": "^7.0.5",
+    "@types/jasmine": "^2.5.43",
     "@types/joi": "^10.0.0",
-    "@types/jsonwebtoken": "^7.2.0"
+    "@types/jsonwebtoken": "^7.2.0",
+    "@types/node": "^7.0.5",
+    "aws-lambda-mock-context": "^3.0.1",
+    "aws-sdk-mock": "^1.6.1",
+    "chai": "^3.5.0"
   }
 }
