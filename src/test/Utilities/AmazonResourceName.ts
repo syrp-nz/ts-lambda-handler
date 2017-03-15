@@ -60,4 +60,12 @@ describe('AmazonResourceName', () => {
         assert.equal(arn.toString(':'), ARN_CD);
         assert.equal(arn.toString('/'), ARN_CD);
     })
+
+    it('normalize', () => {
+        let arn = Lib.Utilities.AmazonResourceName.normalize(ARN_EB);
+        assert.equal(arn.toString(), ARN_EB);
+
+        arn = Lib.Utilities.AmazonResourceName.normalize(new Lib.Utilities.AmazonResourceName(ARN_EB));
+        assert.equal(arn.toString(), ARN_EB);
+    });
 });

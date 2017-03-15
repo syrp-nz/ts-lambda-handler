@@ -92,6 +92,17 @@ export class AmazonResourceName {
         return arn;
     }
 
-
+    /**
+     * Receives an ARN or ARN string and return a matching AmazonResourceName.
+     * @param  {string|AmazonResourceName} arn
+     * @return {SQSQueueARN}
+     */
+    public static normalize(arn:string|AmazonResourceName): AmazonResourceName {
+        if (arn instanceof AmazonResourceName) {
+            return <AmazonResourceName>arn;
+        } else {
+            return new AmazonResourceName(arn.toString());
+        }
+    }
 
 }
