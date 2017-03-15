@@ -147,12 +147,17 @@ export class Request {
 
     /**
      * Attempt to parse the body content has defined by the content type header
+     * @param   {string}    type    Optional parameter to explicitely define the MIME type to use when parsing the body.
      * @return {any}
      */
-    public getParseBody():any {
+    public getParseBody(type:string = ''):any {
+        if (type == '') {
+            type = this.getContentType();
+        }
+
         let parseBody:any = null;
 
-        switch (this.getContentType()) {
+        switch (type) {
             case 'text/json':
             case 'text/x-json':
             case 'application/json':
