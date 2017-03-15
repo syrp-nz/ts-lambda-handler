@@ -9,6 +9,7 @@ import * as MockContext from 'aws-lambda-mock-context';
 
 const assert = chai.assert;
 const queue = new Lib.Utilities.SQSQueueARN('arn:aws:sqs:us-west-2:123456789:QueueName');
+const topic = new Lib.Utilities.AmazonResourceName('arn:aws:sqs:us-west-2:123456789:TopicName');
 const fnName = 'someLambdaFunctionName';
 
 class TestHandler extends Lib.Handlers.QueuingHandler {
@@ -22,8 +23,13 @@ class TestHandler extends Lib.Handlers.QueuingHandler {
                     callback(null, 'hello');
                 });
 
+                MOCKAWS.mock('SNS', 'publish', (params:AWS.SNS.PublishInput, callback)  => {
+                    assert(false, 'SNS Topic should not be published to');
+                });
+
                 return super.process(request, response).then(() => {
                     MOCKAWS.restore('SQS');
+                    MOCKAWS.restore('SNS');
                 });
             });
         });
@@ -44,12 +50,49 @@ class TestHandlerWithLambdaFn extends Lib.Handlers.QueuingHandler {
                     callback(null, 'hello');
                 });
 
+                MOCKAWS.mock('SNS', 'publish', (params:AWS.SNS.PublishInput, callback)  => {
+                    assert(false, 'SNS Topic should not be published to');
+                });
+
                 return super.process(request, response).then(() => {
                     MOCKAWS.restore('SQS');
+                    MOCKAWS.restore('SNS');
                 });
             });
         });
 
+        return Promise.resolve();
+    }
+}
+
+class TestHandlerWithSns extends Lib.Handlers.QueuingHandler {
+    public process(request: Lib.Request, response: Lib.Response): Promise<void> {
+        describe('Handlers.QueuingHandler', () => {
+            it('With SNS Topic', () => {
+                MOCKAWS.mock('SQS', 'sendMessage', (params:AWS.SQS.SendMessageRequest, callback) => {
+                    assert.equal(params.QueueUrl, queue.url());
+                    assert.equal(params.MessageBody, JSON.stringify(fakeEvent));
+                    assert.isNotOk(params.MessageAttributes);
+                    callback(null, 'hello');
+                });
+                let snsCalled = false;
+                MOCKAWS.mock('SNS', 'publish', (params:AWS.SNS.PublishInput, callback)  => {
+                    assert.equal(params.TopicArn, topic.toString());
+                    assert.equal(params.Message, JSON.stringify(fakeEvent));
+                    const response: AWS.SNS.PublishResponse = {
+                        MessageId: '123456789'
+                    }
+                    snsCalled = true;
+                    callback(null, response);
+                });
+
+                return super.process(request, response).then(() => {
+                    assert(snsCalled, 'SNS Topic was not published to');
+                    MOCKAWS.restore('SQS');
+                    MOCKAWS.restore('SNS');
+                });
+            });
+        });
         return Promise.resolve();
     }
 }
@@ -62,7 +105,13 @@ describe('Handlers.QueuingHandler', () => {
         assert.equal(response.statusCode, 200);
     });
 
-    handler = new TestHandlerWithLambdaFn(queue, fnName);
+    handler = new TestHandlerWithLambdaFn(queue, {lambdaFn: fnName});
+    handler.handle(fakeEvent, MockContext(), (error, response: Lambda.ProxyResult) => {
+        assert.isNotOk(error);
+        assert.equal(response.statusCode, 200);
+    });
+
+    handler = new TestHandlerWithSns(queue, {notifySNSTopic: topic});
     handler.handle(fakeEvent, MockContext(), (error, response: Lambda.ProxyResult) => {
         assert.isNotOk(error);
         assert.equal(response.statusCode, 200);
