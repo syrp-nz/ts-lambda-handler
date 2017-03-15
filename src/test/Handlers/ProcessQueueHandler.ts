@@ -8,7 +8,6 @@ import * as AWS from 'aws-sdk';
 import * as MockContext from 'aws-lambda-mock-context';
 
 declare const process;
-console.dir(process.env);
 
 const assert = chai.assert;
 const queue = new Lib.Utilities.SQSQueueARN('arn:aws:sqs:us-west-2:123456789:QueueName');
@@ -20,7 +19,7 @@ const mockLambda = (params: AWS.Lambda.InvocationRequest, callback) => {
             callback(null, {StatusCode: 200});
             break;
         case 'FailMe':
-            callback(null, {StatusCode: 502});
+            callback(null, {StatusCode: 200, FunctionError: 'Handled'});
             break;
         case 'IDontExist':
             callback(null, {StatusCode: 400});
@@ -208,5 +207,28 @@ describe('Handlers.ProcessQueueHandler', () => {
         assert.equal(response.statusCode, 200);
     });
 
+    // Testing the handler with an empty message list
+    handler = new TestHandler(queue);
+    handler.mockSqsReceiveMessage = (params:AWS.SQS.ReceiveMessageRequest, callback) => {
+        assert.equal(params.QueueUrl, queue.url());
+        delete sqsMessages.Messages;
+        callback(null, sqsMessages);
+    };
+    handler.mockSqsDeleteMessage = (params:AWS.SQS.DeleteMessageRequest, callback) => {
+        assert(false, 'There should not be any message to delete')
+        callback(null, {});
+    };
+
+    handler.mockLambdaInvoke = (params: AWS.Lambda.InvocationRequest, callback) => {
+        assert(false, 'There shoudl not be any invocation')
+    }
+    handler.itTitle = 'Testing the handler with an empty message list';
+    handler.handle(fakeEvent, MockContext(), (error, response: Lambda.ProxyResult) => {
+        assert.isNotOk(error);
+        let body = JSON.parse(response.body);
+        assert.equal(body.errorCount, 0);
+        assert.equal(body.successCount, 0);
+        assert.equal(response.statusCode, 200);
+    });
 
 });

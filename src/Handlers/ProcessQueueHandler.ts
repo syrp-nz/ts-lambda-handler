@@ -88,6 +88,11 @@ export class ProcessQueueHandler extends AbstractHandler {
      * @return {Promise<any>}                      [description]
      */
     protected processMessages(data: AWS.SQS.ReceiveMessageResult): Promise<any> {
+        // There's no message in the queue.
+        if (!data.Messages || data.Messages.length == 0) {
+            return Promise.resolve();
+        }
+
         const promises: Promise<any>[] = [];
 
         // Loop over the SQS message
@@ -138,7 +143,7 @@ export class ProcessQueueHandler extends AbstractHandler {
      * @return {Promise<void>}                   [description]
      */
     protected readInvocationResponse(data: AWS.Lambda.InvocationResponse, messageId:string): Promise<void> {
-        if (data.StatusCode < 400) {
+        if (data.StatusCode < 400 && (data.FunctionError == undefined || data.FunctionError == '') ) {
             this.jobSuccesses[messageId] = data;
             return Promise.resolve();
         } else {
