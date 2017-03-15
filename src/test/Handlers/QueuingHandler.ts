@@ -20,7 +20,10 @@ class TestHandler extends Lib.Handlers.QueuingHandler {
                     assert.equal(params.QueueUrl, queue.url());
                     assert.equal(params.MessageBody, JSON.stringify(fakeEvent));
                     assert.isNotOk(params.MessageAttributes);
-                    callback(null, 'hello');
+                    const data: AWS.SQS.SendMessageResult = {
+                        MessageId: 'qwerty123'
+                    };
+                    callback(null, data);
                 });
 
                 MOCKAWS.mock('SNS', 'publish', (params:AWS.SNS.PublishInput, callback)  => {
@@ -34,6 +37,12 @@ class TestHandler extends Lib.Handlers.QueuingHandler {
             });
         });
         return Promise.resolve();
+    }
+
+    protected sendResponse(response: Lib.Response, data: AWS.SQS.SendMessageResult): Promise<void> {
+        assert.isOk(data);
+        assert.equal(data.MessageId, 'qwerty123');
+        return super.sendResponse(response, data);
     }
 }
 
@@ -97,8 +106,39 @@ class TestHandlerWithSns extends Lib.Handlers.QueuingHandler {
     }
 }
 
+class TestHandlerWithInvalidRequest extends Lib.Handlers.QueuingHandler {
+    public process(request: Lib.Request, response: Lib.Response): Promise<void> {
+        describe('Handlers.QueuingHandler', () => {
+            it('Request is judge invalid', () => {
+                MOCKAWS.mock('SQS', 'sendMessage', (params:AWS.SQS.SendMessageRequest, callback) => {
+                    assert(false, 'SQS.sendMessage should not be called if the request is judge invalid.')
+                });
+
+                MOCKAWS.mock('SNS', 'publish', (params:AWS.SNS.PublishInput, callback)  => {
+                    assert(false, 'SNS.publish should not be called if the request is judge invalid.')
+                });
+
+                return super.process(request, response).then(() => {
+                    MOCKAWS.restore('SQS');
+                    MOCKAWS.restore('SNS');
+                });
+            });
+        });
+        return Promise.resolve();
+    }
+
+    protected sendResponse(response: Lib.Response, data: AWS.SQS.SendMessageResult): Promise<void> {
+        assert.isNotOk(data);
+        return super.sendResponse(response, data);
+    }
+
+    protected validateRequest(request: Lib.Request): Promise<boolean> {
+        return Promise.resolve(false);
+    }
+}
+
 describe('Handlers.QueuingHandler', () => {
-    let handler = new TestHandler(queue);
+    let handler: Lib.Handlers.QueuingHandler = new TestHandler(queue);
 
     handler.handle(fakeEvent, MockContext(), (error, response: Lambda.ProxyResult) => {
         assert.isNotOk(error);
@@ -112,6 +152,12 @@ describe('Handlers.QueuingHandler', () => {
     });
 
     handler = new TestHandlerWithSns(queue, {notifySNSTopic: topic});
+    handler.handle(fakeEvent, MockContext(), (error, response: Lambda.ProxyResult) => {
+        assert.isNotOk(error);
+        assert.equal(response.statusCode, 200);
+    });
+
+    handler = new TestHandlerWithInvalidRequest(queue);
     handler.handle(fakeEvent, MockContext(), (error, response: Lambda.ProxyResult) => {
         assert.isNotOk(error);
         assert.equal(response.statusCode, 200);

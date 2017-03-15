@@ -29,30 +29,42 @@ export class QueuingHandler extends AbstractHandler {
     }
 
     public process(request:Request, response:Response): Promise<void> {
-        return this.validateRequest(request).then(() => {
-
-            // Send request to SQS
-            let param = this.buildSQSmessage();
-            let sqs = new AWS.SQS;
-            return sqs.sendMessage(param).promise();
-
-        }).then((data: AWS.SQS.SendMessageResult) => {
-            return this.publishToSNS(data);
-        }).then(() => {
-            return this.sendResponse(response);
+        return this.validateRequest(request).then((storeInQueue: boolean) => {
+            // If we are to store the evetn in a queue
+            if (storeInQueue) {
+                // Send request to SQS
+                let param = this.buildSQSmessage();
+                let sqs = new AWS.SQS;
+                return sqs.sendMessage(param)
+                    .promise()
+                    .then((data: AWS.SQS.SendMessageResult) => {
+                        // Send a SNS notification
+                        return this.publishToSNS(data)
+                            .then(() => data); // Once the notification, pass along the SQS message reference
+                    });
+            } else {
+                // There's no message to queue, so lets not do anything.
+                return Promise.resolve(null);
+            }
+        })
+        .then((data: AWS.SQS.SendMessageResult) => {
+            return this.sendResponse(response, data);
         })
     }
 
     /**
-     * You can override this method if the event needs validated in some way before being stored in a queue. If the
-     * event is invalid, this method should return a rejected promise with an suitable HttpError.
+     * You can override this method if the event needs validated in some way before being stored in a queue.
+     * If the Promise returns true, the event will be queue. If the Promise returns false, the event will not be store,
+     * but we will still response to the webhook with a 200 OK.
+     *
+     * If an error needs to be reported to the client, reject the promise with a suitable HttpError.
      *
      * If the method is not overriden, the event will systematically be stored in the queue.
      *
      * @return {Promise<void>} [description]
      */
-    protected validateRequest(request: Request): Promise<void> {
-        return Promise.resolve();
+    protected validateRequest(request: Request): Promise<boolean> {
+        return Promise.resolve(true);
     }
 
     /**
@@ -118,10 +130,12 @@ export class QueuingHandler extends AbstractHandler {
     /**
      * Sends an empty 200 OK response. If your handler needs to return something different, you can override this
      * method.
-     * @param  {Response}      response
+     * @param  {Response}                       response
+     * @param  {AWS.SQS.SendMessageResult}      data The response from SQS. This may be null, if the message was not
+     *                                               sent away.
      * @return {Promise<void>}
      */
-    protected sendResponse(response: Response): Promise<void> {
+    protected sendResponse(response: Response, data: AWS.SQS.SendMessageResult = null): Promise<void> {
         response.send();
         return Promise.resolve();
     }
