@@ -55,4 +55,12 @@ function print_debug(message) {
     }
 }
 exports.print_debug = print_debug;
+/**
+ * Returns true if the script is running in a testing context.
+ * @return {boolean}
+ */
+function isInTestingMode() {
+    return process.env.LOADED_MOCHA_OPTS != undefined && process.env.LOADED_MOCHA_OPTS;
+}
+exports.isInTestingMode = isInTestingMode;
 //# sourceMappingURL=/var/www/LambdaHandler/src/Utilities/Functions.js.map

@@ -13,3 +13,8 @@ export declare function decryptEnvVar(cipherVarName: string, decryptedVarName?: 
  * @param {any} message [description]
  */
 export declare function print_debug(message: any): void;
+/**
+ * Returns true if the script is running in a testing context.
+ * @return {boolean}
+ */
+export declare function isInTestingMode(): boolean;
