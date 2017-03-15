@@ -125,7 +125,7 @@ export abstract class AbstractHandler {
         if (error.passthrough) {
             this.response.fail(error);
         } else {
-            print_debug(error);
+            console.error(error);
             this.response.fail(new InternalServerError({
                 'Region': process.env.AWS_REGION,
                 'Function': this.context.functionName,
