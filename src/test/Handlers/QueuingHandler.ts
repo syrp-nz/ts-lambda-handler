@@ -13,16 +13,18 @@ const fnName = 'someLambdaFunctionName';
 
 class TestHandler extends Lib.Handlers.QueuingHandler {
     public process(request: Lib.Request, response: Lib.Response): Promise<void> {
-        it('No Lambda Function', () => {
-            MOCKAWS.mock('SQS', 'sendMessage', (params:AWS.SQS.SendMessageRequest, callback) => {
-                assert.equal(params.QueueUrl, queue.url());
-                assert.equal(params.MessageBody, JSON.stringify(fakeEvent));
-                assert.isNotOk(params.MessageAttributes);
-                callback(null, 'hello');
-            });
+        describe('Handlers.QueuingHandler', () => {
+            it('No Lambda Function', () => {
+                MOCKAWS.mock('SQS', 'sendMessage', (params:AWS.SQS.SendMessageRequest, callback) => {
+                    assert.equal(params.QueueUrl, queue.url());
+                    assert.equal(params.MessageBody, JSON.stringify(fakeEvent));
+                    assert.isNotOk(params.MessageAttributes);
+                    callback(null, 'hello');
+                });
 
-            return super.process(request, response).then(() => {
-                MOCKAWS.restore('SQS');
+                return super.process(request, response).then(() => {
+                    MOCKAWS.restore('SQS');
+                });
             });
         });
         return Promise.resolve();
@@ -31,20 +33,23 @@ class TestHandler extends Lib.Handlers.QueuingHandler {
 
 class TestHandlerWithLambdaFn extends Lib.Handlers.QueuingHandler {
     public process(request: Lib.Request, response: Lib.Response): Promise<void> {
-        it('With some Lambda Function', () => {
-            MOCKAWS.mock('SQS', 'sendMessage', (params:AWS.SQS.SendMessageRequest, callback) => {
-                assert.equal(params.QueueUrl, queue.url());
-                assert.equal(params.MessageBody, JSON.stringify(fakeEvent));
-                assert.isOk(params.MessageAttributes);
-                assert.isOk(params.MessageAttributes['lambdaFn']);
-                assert.equal(params.MessageAttributes['lambdaFn'].StringValue, fnName);
-                callback(null, 'hello');
-            });
+        describe('Handlers.QueuingHandler', () => {
+            it('With some Lambda Function', () => {
+                MOCKAWS.mock('SQS', 'sendMessage', (params:AWS.SQS.SendMessageRequest, callback) => {
+                    assert.equal(params.QueueUrl, queue.url());
+                    assert.equal(params.MessageBody, JSON.stringify(fakeEvent));
+                    assert.isOk(params.MessageAttributes);
+                    assert.isOk(params.MessageAttributes['lambdaFn']);
+                    assert.equal(params.MessageAttributes['lambdaFn'].StringValue, fnName);
+                    callback(null, 'hello');
+                });
 
-            return super.process(request, response).then(() => {
-                MOCKAWS.restore('SQS');
+                return super.process(request, response).then(() => {
+                    MOCKAWS.restore('SQS');
+                });
             });
         });
+
         return Promise.resolve();
     }
 }

@@ -5,6 +5,7 @@ import { InternalServerError } from '../Errors';
 import { Response } from '../Response';
 import { AmazonResourceName, SQSQueueARN } from '../Utilities';
 import { HandlerConfig } from '../Config';
+import { LAMBDA_FN_ATTR } from './ProcessQueueHandler';
 
 /**
  * Get an event store to a queue with a schedule function to run it.

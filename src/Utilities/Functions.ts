@@ -61,3 +61,11 @@ export function print_debug(message:any):void {
         }
     }
 }
+
+/**
+ * Returns true if the script is running in a testing context.
+ * @return {boolean}
+ */
+export function isInTestingMode(): boolean {
+    return process.env.LOADED_MOCHA_OPTS != undefined && process.env.LOADED_MOCHA_OPTS;
+}
