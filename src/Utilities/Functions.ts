@@ -1,7 +1,11 @@
 import { Buffer } from 'buffer';
-import { KMS } from 'aws-sdk';
+import { KMS, Lambda } from 'aws-sdk';
 
 declare const process: any;
+
+/**
+ * This files contains a few generic utility functions that don't necesarely belong to any specific class
+ */
 
 /**
  * Decrypts an encrypted variables from `process.env` and stores the decrypted value in a different variable.
@@ -68,4 +72,39 @@ export function print_debug(message:any):void {
  */
 export function isInTestingMode(): boolean {
     return process.env.LOADED_MOCHA_OPTS != undefined && process.env.LOADED_MOCHA_OPTS;
+}
+
+/**
+ * Received a Lambda Invoke Result object and determines if it should be considered an error.
+ *
+ * Because our handlers attempts to mimic an HTTP request, they are designed to report errors with valid HTTP
+ * responses. Lambda doesn't consider these error response as errors because the Lambda function exit normally.
+ *
+ * If the handler doesn't return any payload or if the handler's response didn't specify a status code, we'll assume
+ * the function completed normally
+ *
+ * @param {Lambda.InvocationResponse} response
+ * @return {boolean}
+ */
+export function validateLambdaInvokeResponse(response: Lambda.InvocationResponse): boolean {
+
+    // Lambda itself says the function failed
+    if (response.StatusCode >= 400 || (response.FunctionError != undefined && response.FunctionError != '')) {
+        return false;
+    }
+
+    // Try to see if our response has a payload
+    if (response.Payload) {
+        try {
+            // Let's try to parse the response payload as JSON.
+            const payload = JSON.parse(response.Payload.toString());
+
+            // If there's no status code or if the status code is below 400, we cosnider the response to be a success
+            return payload.statusCode == undefined || payload.statusCode < 400;
+        } catch (error) {
+            // Can't convert the payload to JSON, will assume the request complete normally but didn't output JSON.
+        }
+    }
+
+    return true;
 }

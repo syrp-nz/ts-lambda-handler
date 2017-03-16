@@ -7,6 +7,7 @@ import { AmazonResourceName, SQSQueueARN } from '../Utilities';
 import { isInTestingMode} from '../Utilities/Functions';
 import { ProcessQueueHandlerConfig } from '../Config';
 import { Map } from '../Map';
+import { validateLambdaInvokeResponse } from '../Utilities/Functions';
 
 export const LAMBDA_FN_ATTR = 'lambdaFn';
 
@@ -143,7 +144,7 @@ export class ProcessQueueHandler extends AbstractHandler {
      * @return {Promise<void>}                   [description]
      */
     protected readInvocationResponse(data: AWS.Lambda.InvocationResponse, messageId:string): Promise<void> {
-        if (data.StatusCode < 400 && (data.FunctionError == undefined || data.FunctionError == '') ) {
+        if (validateLambdaInvokeResponse(data)) {
             this.jobSuccesses[messageId] = data;
             return Promise.resolve();
         } else {
