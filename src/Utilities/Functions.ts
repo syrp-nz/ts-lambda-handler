@@ -1,5 +1,6 @@
 import { Buffer } from 'buffer';
 import { KMS, Lambda } from 'aws-sdk';
+import { AmazonResourceName, ArnOrString } from './AmazonResourceName';
 
 declare const process: any;
 
@@ -34,7 +35,7 @@ export function decryptEnvVar(
 
     // If we don't specify an encdoging default to base 64.
     if (!encoding) {
-        encoding = 'base64'
+        encoding = 'base64';
     }
 
     // Build the parameters for our KMS request.
@@ -51,6 +52,26 @@ export function decryptEnvVar(
     });
 
 };
+
+export function encryptVar(plaintext:string, key:ArnOrString, encoding:string = ''): Promise<string> {
+    const params:KMS.EncryptRequest = {
+        KeyId: AmazonResourceName.normalize(key).toString() ,
+        Plaintext: plaintext
+    };
+
+    // If we don't specify an encdoging default to base 64.
+    if (!encoding) {
+        encoding = 'base64';
+    }
+
+    const kms = new KMS();
+    return kms.encrypt(params).promise().then((data:AWS.KMS.EncryptResponse) => {
+        const cipher = (<Buffer>data.CiphertextBlob).toString(encoding);
+        return Promise.resolve(cipher);
+    });
+
+}
+
 
 /**
  * Print a message if the `LAMBDA_HANDLER_DEBUG` flag is set on `process.env`.

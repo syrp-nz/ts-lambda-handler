@@ -97,7 +97,7 @@ export class AmazonResourceName {
      * @param  {string|AmazonResourceName} arn
      * @return {SQSQueueARN}
      */
-    public static normalize(arn:string|AmazonResourceName): AmazonResourceName {
+    public static normalize(arn:ArnOrString): AmazonResourceName {
         if (arn instanceof AmazonResourceName) {
             return <AmazonResourceName>arn;
         } else {
@@ -106,3 +106,5 @@ export class AmazonResourceName {
     }
 
 }
+
+export type ArnOrString = string|AmazonResourceName;
