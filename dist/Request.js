@@ -1,5 +1,4 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 var Url = require("url");
 var Request = (function () {
     function Request(event) {
@@ -140,11 +139,16 @@ var Request = (function () {
     };
     /**
      * Attempt to parse the body content has defined by the content type header
+     * @param   {string}    type    Optional parameter to explicitely define the MIME type to use when parsing the body.
      * @return {any}
      */
-    Request.prototype.getParseBody = function () {
+    Request.prototype.getParseBody = function (type) {
+        if (type === void 0) { type = ''; }
+        if (type == '') {
+            type = this.getContentType();
+        }
         var parseBody = null;
-        switch (this.getContentType()) {
+        switch (type) {
             case 'text/json':
             case 'text/x-json':
             case 'application/json':

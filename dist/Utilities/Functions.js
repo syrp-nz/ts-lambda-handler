@@ -1,7 +1,10 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 var buffer_1 = require("buffer");
 var aws_sdk_1 = require("aws-sdk");
+var AmazonResourceName_1 = require("./AmazonResourceName");
+/**
+ * This files contains a few generic utility functions that don't necesarely belong to any specific class
+ */
 /**
  * Decrypts an encrypted variables from `process.env` and stores the decrypted value in a different variable.
  * @param  {string}        cipherVarName    Name of the variable in `process.env` containing the encypted text.
@@ -40,6 +43,23 @@ function decryptEnvVar(cipherVarName, decryptedVarName, encoding) {
 }
 exports.decryptEnvVar = decryptEnvVar;
 ;
+function encryptVar(plaintext, key, encoding) {
+    if (encoding === void 0) { encoding = ''; }
+    var params = {
+        KeyId: AmazonResourceName_1.AmazonResourceName.normalize(key).toString(),
+        Plaintext: plaintext
+    };
+    // If we don't specify an encdoging default to base 64.
+    if (!encoding) {
+        encoding = 'base64';
+    }
+    var kms = new aws_sdk_1.KMS();
+    return kms.encrypt(params).promise().then(function (data) {
+        var cipher = data.CiphertextBlob.toString(encoding);
+        return Promise.resolve(cipher);
+    });
+}
+exports.encryptVar = encryptVar;
 /**
  * Print a message if the `LAMBDA_HANDLER_DEBUG` flag is set on `process.env`.
  * @param {any} message [description]
@@ -63,4 +83,35 @@ function isInTestingMode() {
     return process.env.LOADED_MOCHA_OPTS != undefined && process.env.LOADED_MOCHA_OPTS;
 }
 exports.isInTestingMode = isInTestingMode;
+/**
+ * Received a Lambda Invoke Result object and determines if it should be considered an error.
+ *
+ * Because our handlers attempts to mimic an HTTP request, they are designed to report errors with valid HTTP
+ * responses. Lambda doesn't consider these error response as errors because the Lambda function exit normally.
+ *
+ * If the handler doesn't return any payload or if the handler's response didn't specify a status code, we'll assume
+ * the function completed normally
+ *
+ * @param {Lambda.InvocationResponse} response
+ * @return {boolean}
+ */
+function validateLambdaInvokeResponse(response) {
+    // Lambda itself says the function failed
+    if (response.StatusCode >= 400 || (response.FunctionError != undefined && response.FunctionError != '')) {
+        return false;
+    }
+    // Try to see if our response has a payload
+    if (response.Payload) {
+        try {
+            // Let's try to parse the response payload as JSON.
+            var payload = JSON.parse(response.Payload.toString());
+            // If there's no status code or if the status code is below 400, we cosnider the response to be a success
+            return payload.statusCode == undefined || payload.statusCode < 400;
+        }
+        catch (error) {
+        }
+    }
+    return true;
+}
+exports.validateLambdaInvokeResponse = validateLambdaInvokeResponse;
 //# sourceMappingURL=/var/www/LambdaHandler/src/Utilities/Functions.js.map

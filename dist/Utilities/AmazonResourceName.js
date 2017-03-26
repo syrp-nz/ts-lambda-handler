@@ -1,5 +1,4 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * Represent an Amazon Resource Name as defined on http://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html
  */
@@ -79,6 +78,19 @@ var AmazonResourceName = (function () {
         }
         arn += this.resource.trim();
         return arn;
+    };
+    /**
+     * Receives an ARN or ARN string and return a matching AmazonResourceName.
+     * @param  {string|AmazonResourceName} arn
+     * @return {SQSQueueARN}
+     */
+    AmazonResourceName.normalize = function (arn) {
+        if (arn instanceof AmazonResourceName) {
+            return arn;
+        }
+        else {
+            return new AmazonResourceName(arn.toString());
+        }
     };
     return AmazonResourceName;
 }());

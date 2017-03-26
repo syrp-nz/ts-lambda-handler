@@ -33,4 +33,11 @@ export declare class AmazonResourceName {
      * @return {string} [description]
      */
     toString(resourceSeperator?: '/' | ':'): string;
+    /**
+     * Receives an ARN or ARN string and return a matching AmazonResourceName.
+     * @param  {string|AmazonResourceName} arn
+     * @return {SQSQueueARN}
+     */
+    static normalize(arn: ArnOrString): AmazonResourceName;
 }
+export declare type ArnOrString = string | AmazonResourceName;

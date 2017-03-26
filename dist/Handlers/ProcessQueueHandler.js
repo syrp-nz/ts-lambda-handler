@@ -1,19 +1,14 @@
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-Object.defineProperty(exports, "__esModule", { value: true });
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
 var AbstractHandler_1 = require("./AbstractHandler");
 var AWS = require("aws-sdk");
 var Utilities_1 = require("../Utilities");
 var Functions_1 = require("../Utilities/Functions");
+var Functions_2 = require("../Utilities/Functions");
 exports.LAMBDA_FN_ATTR = 'lambdaFn';
 /**
  * Read messages from an SQS Queue and attempt to process them with Lambda functions.
@@ -81,6 +76,10 @@ var ProcessQueueHandler = (function (_super) {
      */
     ProcessQueueHandler.prototype.processMessages = function (data) {
         var _this = this;
+        // There's no message in the queue.
+        if (!data.Messages || data.Messages.length == 0) {
+            return Promise.resolve();
+        }
         var promises = [];
         var _loop_1 = function (msg) {
             promises.push(this_1.invoke(msg)
@@ -129,7 +128,7 @@ var ProcessQueueHandler = (function (_super) {
      * @return {Promise<void>}                   [description]
      */
     ProcessQueueHandler.prototype.readInvocationResponse = function (data, messageId) {
-        if (data.StatusCode < 400) {
+        if (Functions_2.validateLambdaInvokeResponse(data)) {
             this.jobSuccesses[messageId] = data;
             return Promise.resolve();
         }

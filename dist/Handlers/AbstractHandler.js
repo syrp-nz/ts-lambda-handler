@@ -1,5 +1,4 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 var Request_1 = require("../Request");
 var Response_1 = require("../Response");
 var InternalServerError_1 = require("../Errors/InternalServerError");
@@ -104,7 +103,7 @@ var AbstractHandler = (function () {
             this.response.fail(error);
         }
         else {
-            Functions_1.print_debug(error);
+            console.error(error);
             this.response.fail(new InternalServerError_1.InternalServerError({
                 'Region': process.env.AWS_REGION,
                 'Function': this.context.functionName,
