@@ -4,6 +4,16 @@ import Url = require('url');
 export class Request {
 
     constructor(protected event: APIGatewayEvent) {
+        // Make sure our Parameter arrays always resolve to objects
+        if (this.event.queryStringParameters == null) {
+            this.event.queryStringParameters = {};
+        }
+
+        if (this.event.pathParameters == null) {
+            this.event.pathParameters = {};
+        }
+
+        // Normalize the keys for objects that should have case insensitive keys.
         this.normalizeKeys(this.event.headers);
         this.normalizeKeys(this.event.queryStringParameters);
         this.normalizeKeys(this.event.pathParameters);
