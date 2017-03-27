@@ -5,6 +5,7 @@ import { DynamoDB } from 'aws-sdk';
 import { ValidationError, NotFoundError, MethodNotAllowedError } from '../Errors';
 import * as JOI from 'joi';
 import { Map } from '../Map';
+import * as uniqid from 'uniqid';
 
 /**
  * An Handler to implement a REST endpoint for a Dynamo table.
@@ -61,6 +62,27 @@ export abstract class DynamoHandler extends AbstractHandler {
                     p = this.search();
                 }
                 break;
+            case "POST":
+                if (this.isSingleRequest()) {
+                    p = Promise.reject(new MethodNotAllowedError);
+                } else {
+                    p = this.create();
+                }
+                break;
+            case "PUT":
+                if (this.isSingleRequest()) {
+
+                } else {
+                    p = Promise.reject(new MethodNotAllowedError);
+                }
+                break;
+            case "DELETE":
+                if (this.isSingleRequest()) {
+
+                } else {
+                    p = Promise.reject(new MethodNotAllowedError);
+                }
+                break;
             case "OPTIONS":
                 response.send();
                 p = Promise.resolve();
@@ -90,27 +112,30 @@ export abstract class DynamoHandler extends AbstractHandler {
      * @return {Promise<void>}
      */
     protected retrieveSingle(): Promise<void> {
-        const param: DynamoDB.GetItemInput = {
-            TableName: this.table,
-            Key: this.getSingleKey(),
-            ProjectionExpression: this.getProjectionExpression()
-        };
+        return this.getSingleKey().then(key => {
+            const param: DynamoDB.GetItemInput = {
+                TableName: this.table,
+                Key: key,
+                ProjectionExpression: this.getProjectionExpression()
+            };
 
-        if (param.ProjectionExpression == '*' || param.ProjectionExpression == '') {
-            delete param.ProjectionExpression;
-        }
+            if (param.ProjectionExpression == '*' || param.ProjectionExpression == '') {
+                delete param.ProjectionExpression;
+            }
 
-        const client = new DynamoDB.DocumentClient();
-        return client.get(param).promise()
-            .then((results: DynamoDB.GetItemOutput): Promise<void> => {
-                if (results.Item) {
-                    this.scrubData(results.Item)
-                    this.response.setBody(results.Item).send();
-                    return Promise.resolve();
-                } else {
-                    return Promise.reject(new NotFoundError);
-                }
-            });
+            const client = new DynamoDB.DocumentClient();
+            return client.get(param).promise()
+                .then((results: DynamoDB.GetItemOutput): Promise<void> => {
+                    if (results.Item) {
+                        this.scrubData(results.Item)
+                        this.response.setBody(results.Item).send();
+                        return Promise.resolve();
+                    } else {
+                        return Promise.reject(new NotFoundError);
+                    }
+                });
+        })
+
     }
 
     /**
@@ -118,12 +143,18 @@ export abstract class DynamoHandler extends AbstractHandler {
      *
      * The basic function assumes your key uses an ID column, but you can override this function if your table uses a
      * different key.
-     * @return {DynamoDB.Key} [description]
+     * @param {boolean} newEntry If this is set to true, a unique id will be generated. This is suitable for creting a
+     *                           new entry
+     * @return {Promise<DynamoDB.Key>}
      */
-    protected getSingleKey(): DynamoDB.Key {
-        return {'id': this.request.getResourceId()};
+    protected getSingleKey(newEntry: boolean = false): Promise<DynamoDB.Key> {
+        return Promise.resolve({'id': newEntry ? uniqid() : this.request.getResourceId()});
     }
 
+    /**
+     * Search the DynamoDB table for records matchign the query.
+     * @return {Promise<void>}
+     */
     protected search(): Promise<void> {
         return this.searchValidation().then(() => {
             const param = this.initSearch();
@@ -154,6 +185,10 @@ export abstract class DynamoHandler extends AbstractHandler {
         }
     }
 
+    /**
+     * Return a JOI Schema for validating the search request. You may override this function to add your own validation.
+     * @return {JOI.SchemaMap}
+     */
     protected searchValidationSchema(): JOI.SchemaMap {
         const schemaMap: JOI.SchemaMap = {
             limit: JOI.number().integer().min(0).max(150)
@@ -161,6 +196,10 @@ export abstract class DynamoHandler extends AbstractHandler {
         return schemaMap;
     }
 
+    /**
+     * Build the parameters for the Query request to DynamoDB
+     * @return {DynamoDB.QueryInput} [description]
+     */
     protected initSearch(): DynamoDB.QueryInput {
         const params: DynamoDB.QueryInput = {
             TableName: this.table,
@@ -295,6 +334,92 @@ export abstract class DynamoHandler extends AbstractHandler {
                 this.removeItem(item[fieldName], path);
             }
         }
+    }
+
+    /**
+     * Retrieve the data from the request for a POST or a PUT. You may override this method if the data needs to be
+     * altered in any way before being saved to the DynamoDB table.
+     * @throws BadRequestError
+     * @return {any}
+     */
+    protected getBodyData(): any {
+        let data = this.request.getBodyAsJSON();
+        return data;
+    }
+
+    /**
+     * Create a new entry in the DynamoDB table
+     * @return {Promise<void>} [description]
+     */
+    protected create(): Promise<void> {
+        // Get the data we want to save
+        let data = this.getBodyData();
+
+        return this.getSingleKey(true).then(key => {
+            // We get a new key and merge the results with the existing data
+            Object.assign(data, key);
+            return this.itemValidation(data);
+        }).then(() => {
+            // Augment our data with some interesting bits of info
+            this.preCreation(data)
+        }).then(() => {
+            // Do the Putting.
+            const params: DynamoDB.PutItemInput = {
+                TableName : this.table,
+                Item: data,
+                ConditionExpression: 'attribute_not_exists(id)'
+            }
+
+            const client = new DynamoDB.DocumentClient();
+            return client.put(params).promise()
+        }).then((response: DynamoDB.PutItemOutput) => {
+            // Send the new item back to the client
+            this.scrubData(data);
+            this.response.setStatusCode(201).setBody(data).send();
+            return Promise.resolve();
+        })
+
+    }
+
+    /**
+     * Validate the data for a POST or PUT request. Validation should be returned via a Promise Rejection, ideally with
+     * a Validation Error. You may override this method to customize your validation. Validation rules can be provided
+     * via `itemValidationSchema` as well.
+     *
+     * For creation request, the data will have a unique key assign to it so you.
+     *
+     * @param {any} data Data to validate
+     * @return {Promise<void>}
+     */
+    protected itemValidation(data: any): Promise<void> {
+        const result = JOI.validate( data, JOI.object().keys(this.itemValidationSchema()) );
+        if (result.error) {
+            return Promise.reject(new ValidationError(result.error.details));
+        } else {
+            return Promise.resolve();
+        }
+    }
+
+    /**
+     * Return a JOI Schema for validating the items that will added or updated in the DynamoDB table.
+     * @return {JOI.SchemaMap}
+     */
+    protected itemValidationSchema(): JOI.SchemaMap {
+        const schemaMap: JOI.SchemaMap = {
+            id: JOI.string().required()
+        }
+        return schemaMap;
+    }
+
+    /**
+     * This method is called just before creating an item in the table and after the item has passed validation. You can
+     * override it to augment the data that will be store in the database. e.g.: By adding a creation timestamp or a
+     * created by field.
+     * @param  {any}           data [description]
+     * @return {Promise<void>}      [description]
+     */
+    protected preCreation(data: any): Promise<void> {
+        return Promise.resolve();
     }
 
 }
