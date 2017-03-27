@@ -2,7 +2,7 @@ import { AbstractHandler } from './AbstractHandler';
 import { Request } from '../Request';
 import { Response } from '../Response';
 import { DynamoDB } from 'aws-sdk';
-import { ValidationError, NotFoundError } from '../Errors';
+import { ValidationError, NotFoundError, MethodNotAllowedError } from '../Errors';
 import * as JOI from 'joi';
 import { Map } from '../Map';
 
@@ -65,6 +65,8 @@ export abstract class DynamoHandler extends AbstractHandler {
                 response.send();
                 p = Promise.resolve();
                 break;
+            default:
+                p = Promise.reject(new MethodNotAllowedError);
         }
 
         return p;
