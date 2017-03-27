@@ -1,5 +1,6 @@
-export { HttpError } from './HttpError';
-export { ValidationError } from './ValidationError';
 export { ForbiddenError } from './ForbiddenError';
-export { UnauthorizedError } from './UnauthorizedError';
+export { HttpError } from './HttpError';
 export { InternalServerError } from './InternalServerError';
+export { NotFoundError } from './NotFoundError';
+export { UnauthorizedError } from './UnauthorizedError';
+export { ValidationError } from './ValidationError';
