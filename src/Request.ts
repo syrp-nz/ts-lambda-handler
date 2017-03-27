@@ -1,4 +1,5 @@
 import {APIGatewayEvent} from 'aws-lambda';
+import { BadRequestError } from './Errors';
 import Url = require('url');
 
 export class Request {
@@ -184,10 +185,20 @@ export class Request {
 
     /**
      * Attempt to parse the request body as JSON.
+     * @throws BadRequestError
      * @return {any}
      */
     public getBodyAsJSON(): any {
-        return JSON.parse(this.event.body);
+        try {
+            const data = JSON.parse(this.event.body);
+            if (typeof data == 'object') {
+                return data;
+            } else {
+                throw new BadRequestError();
+            }
+        } catch (error) {
+            throw new BadRequestError();
+        }
     }
 
 }

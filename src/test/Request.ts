@@ -10,6 +10,8 @@ describe('Request', () => {
 
     it('constructor');
 
+    it('getBodyAsJSON');
+
     it( 'data', () => {
         assert.strictEqual(request.data, fakeEvent);
     });
