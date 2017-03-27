@@ -2,7 +2,7 @@ import { AbstractHandler } from './AbstractHandler';
 import { Request } from '../Request';
 import { Response } from '../Response';
 import { DynamoDB } from 'aws-sdk';
-import { ValidationError } from '../Errors/ValidationError';
+import { ValidationError, NotFoundError } from '../Errors';
 import * as JOI from 'joi';
 import { Map } from '../Map';
 
@@ -51,18 +51,75 @@ export abstract class DynamoHandler extends AbstractHandler {
 
 
     public process(request:Request, response:Response): Promise<void> {
+        let p: Promise<void>;
+
         switch (request.getMethod()) {
             case "GET":
-                if (request.getResourceId()) {
-
+                if (this.isSingleRequest()) {
+                    p = this.retrieveSingle();
                 } else {
-                    return this.search();
+                    p = this.search();
                 }
                 break;
             case "OPTIONS":
                 response.send();
+                p = Promise.resolve();
                 break;
         }
+
+        return p;
+    }
+
+    /**
+     * Analyze the request and detects if the request is for a specific entry. e.g.: retriving, updating, deleteing a
+     * specific record.
+     *
+     * This method assumes you are using an id path parameter for this purpose. You may override it if your set up is
+     * different.
+     *
+     * @return {boolean}
+     */
+    protected isSingleRequest(): boolean {
+        return this.request.getResourceId() != '';
+    }
+
+    /**
+     * Retrive a specific item from the DynamoDB table.
+     * @return {Promise<void>}
+     */
+    protected retrieveSingle(): Promise<void> {
+        const param: DynamoDB.GetItemInput = {
+            TableName: this.table,
+            Key: this.getSingleKey(),
+            ProjectionExpression: this.getProjectionExpression()
+        };
+
+        if (param.ProjectionExpression == '*' || param.ProjectionExpression == '') {
+            delete param.ProjectionExpression;
+        }
+
+        const client = new DynamoDB.DocumentClient();
+        return client.get(param).promise()
+            .then((results: DynamoDB.GetItemOutput): Promise<void> => {
+                if (results.Item) {
+                    this.scrubData(results.Item)
+                    this.response.setBody(results.Item).send();
+                    return Promise.resolve();
+                } else {
+                    return Promise.reject(new NotFoundError);
+                }
+            });
+    }
+
+    /**
+     * Return a key suitable for retriveing, deleting or updating a single item in the Dynamo table.
+     *
+     * The basic function assumes your key uses an ID column, but you can override this function if your table uses a
+     * different key.
+     * @return {DynamoDB.Key} [description]
+     */
+    protected getSingleKey(): DynamoDB.Key {
+        return {'id': this.request.getResourceId()};
     }
 
     protected search(): Promise<void> {
@@ -120,6 +177,17 @@ export abstract class DynamoHandler extends AbstractHandler {
             params.ExpressionAttributeValues = this.expressionAttributeValues;
         }
 
+        this.setProjectionOnRequest(params);
+
+        return params;
+    }
+
+    /**
+     * Set the Select and ProjectionExpression field on a request.
+     * @param  {DynamoDB.QueryInput} params
+     * @return void
+     */
+    protected setProjectionOnRequest(params: DynamoDB.QueryInput): void {
         const projectionExp = this.getProjectionExpression();
         switch(projectionExp) {
             case '*':
@@ -132,8 +200,6 @@ export abstract class DynamoHandler extends AbstractHandler {
                 params.Select = 'SPECIFIC_ATTRIBUTES';
                 params.ProjectionExpression = projectionExp;
         }
-
-        return params;
     }
 
     /**
