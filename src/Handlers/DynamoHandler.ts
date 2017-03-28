@@ -550,10 +550,7 @@ export abstract class DynamoHandler extends AbstractHandler {
      * @return {Promise<void>}      [description]
      */
     protected preUpdate(data: any, old:any): Promise<any> {
-        console.dir(data);
-        console.dir(old);
         data = extend(true, data, old);
-        console.dir(data);
         return Promise.resolve(data);
     }
 
