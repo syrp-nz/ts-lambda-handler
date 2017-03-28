@@ -6,6 +6,7 @@ import { ValidationError, NotFoundError, MethodNotAllowedError } from '../Errors
 import * as JOI from 'joi';
 import { Map } from '../Map';
 import * as uniqid from 'uniqid';
+import * as extend from 'extend';
 
 /**
  * An Handler to implement a REST endpoint for a Dynamo table.
@@ -48,12 +49,22 @@ export abstract class DynamoHandler extends AbstractHandler {
     protected readonlyFields:string[] = [];
 
     /**
-     * The search index that will be used for the general listing GET request. Leave blank if you want to use the default index.
+     * List of field to retrieve and merge with update statements. If defined this will cause the update function to
+     * fetch a few fields from the existing record and merge them with the new value that will be put in the table.
+     *
+     * This can be helpfull to preserve attributes that the client can not modify directly, but that must still be
+     * retained. e.g.: creation date
      */
-    protected searchIndex:string = '';
+    protected onUpdateMergeFields:string[] = [];
 
     protected expressionAttributeNames: Map<string> = {};
     protected expressionAttributeValues: Map<any> = {};
+
+    /**
+     * Instance of Document Client use to communicate with DynamoDB.
+     * @type {DynamoDB.DocumentClient}
+     */
+    private docClient: DynamoDB.DocumentClient;
 
 
     public process(request:Request, response:Response): Promise<void> {
@@ -76,7 +87,7 @@ export abstract class DynamoHandler extends AbstractHandler {
                 break;
             case "PUT":
                 if (this.isSingleRequest()) {
-
+                    this.update();
                 } else {
                     p = Promise.reject(new MethodNotAllowedError);
                 }
@@ -97,6 +108,18 @@ export abstract class DynamoHandler extends AbstractHandler {
         }
 
         return p;
+    }
+
+    /**
+     * Provide an instance of DocumentClient to communicate with DynamoDB.
+     * @return {DynamoDB.DocumentClient} [description]
+     */
+    protected getDocumentClient(): DynamoDB.DocumentClient {
+        if (!this.docClient) {
+            this.docClient = new DynamoDB.DocumentClient;
+        }
+
+        return this.docClient;
     }
 
     /**
@@ -128,8 +151,7 @@ export abstract class DynamoHandler extends AbstractHandler {
                 delete param.ProjectionExpression;
             }
 
-            const client = new DynamoDB.DocumentClient();
-            return client.get(param).promise()
+            return this.getDocumentClient().get(param).promise()
                 .then((results: DynamoDB.GetItemOutput): Promise<void> => {
                     if (results.Item) {
                         this.scrubDataForRead(results.Item)
@@ -164,8 +186,7 @@ export abstract class DynamoHandler extends AbstractHandler {
         return this.searchValidation().then(() => {
             const param = this.initSearch();
 
-            const client = new DynamoDB.DocumentClient();
-            return client.query(param).promise()
+            return this.getDocumentClient().query(param).promise()
                 .then((results) => this.formatSearchResult(results))
                 .then((formattedResults) => {
                     this.response.setBody(formattedResults).send();
@@ -347,7 +368,7 @@ export abstract class DynamoHandler extends AbstractHandler {
      * @param  {any}      item
      * @param  {string[]} path
      */
-    protected removeItem(item:any, path:string[]) {
+    private removeItem(item:any, path:string[]) {
         const fieldName = path.shift();
         if (item[fieldName]) {
             if (path.length == 0) {
@@ -384,8 +405,9 @@ export abstract class DynamoHandler extends AbstractHandler {
             return this.itemValidation(data);
         }).then(() => {
             // Augment our data with some interesting bits of info
-            this.preCreation(data)
-        }).then(() => {
+            return this.preCreation(data);
+        }).then((augmentedData) => {
+            data = augmentedData;
             // Do the Putting.
             const params: DynamoDB.PutItemInput = {
                 TableName : this.table,
@@ -393,15 +415,55 @@ export abstract class DynamoHandler extends AbstractHandler {
                 ConditionExpression: 'attribute_not_exists(id)'
             }
 
-            const client = new DynamoDB.DocumentClient();
-            return client.put(params).promise()
+            return this.getDocumentClient().put(params).promise()
         }).then((response: DynamoDB.PutItemOutput) => {
             // Send the new item back to the client
             this.scrubDataForRead(data);
             this.response.setStatusCode(201).setBody(data).send();
             return Promise.resolve();
         })
+    }
 
+    /**
+     * Create a new entry in the DynamoDB table
+     * @return {Promise<void>} [description]
+     */
+    protected update(): Promise<void> {
+        // Get the data we want to save
+        let data:any = this.getBodyData();
+        data = this.scrubDataForWrite(data);
+
+        let old: any;
+        let key: DynamoDB.Key;
+
+        return this.getSingleKey().then(itemKey => {
+            key = itemKey;
+            // We get a new key and merge the results with the existing data
+            Object.assign(data, key);
+            return this.itemValidation(data);
+        }).then(() => {
+            return this.fetchOldData(key);
+        }).then((oldData) => {
+            old = oldData;
+            // Augment our data with some interesting bits of info
+            return this.preUpdate(data, old);
+        }).then((augmentedData) => {
+            data = augmentedData;
+
+            // Do the Putting.
+            const params: DynamoDB.PutItemInput = {
+                TableName : this.table,
+                Item: data,
+                ConditionExpression: 'attribute_exists(id)'
+            }
+
+            return this.getDocumentClient().put(params).promise();
+        }).then((response: DynamoDB.PutItemOutput) => {
+            // Send the new item back to the client
+            this.scrubDataForRead(data);
+            this.response.setStatusCode(200).setBody(data).send();
+            return Promise.resolve();
+        })
     }
 
     /**
@@ -439,10 +501,55 @@ export abstract class DynamoHandler extends AbstractHandler {
      * override it to augment the data that will be store in the database. e.g.: By adding a creation timestamp or a
      * created by field.
      * @param  {any}           data [description]
+     * @return {Promise<any>}      [description]
+     */
+    protected preCreation(data: any): Promise<any> {
+        return Promise.resolve(data);
+    }
+
+    /**
+     * This method is called just before updating an item in the table and after the item has passed validation. You can
+     * override it to augment the data that will be store in the database. e.g.: By adding a updated at timestamp or a
+     * updated by field.
+     *
+     * The default behavior is to merge the old data into the new one.
+     *
+     * @param  {any}           data New data that's about to be saved to Dynamo
+     * @param  {any}           old  Fields from the current record as retrieved by `fetchOldData`
      * @return {Promise<void>}      [description]
      */
-    protected preCreation(data: any): Promise<void> {
-        return Promise.resolve();
+    protected preUpdate(data: any, old:any): Promise<any> {
+        console.dir(data);
+        console.dir(old);
+        data = extend(true, data, old);
+        console.dir(data);
+        return Promise.resolve(data);
+    }
+
+    /**
+     * Retrieve some fields from a current record. The list of fieldss returned is defined via `onUpdateMergeFields`.
+     * @param  {DynamoDB.Key} key
+     * @return {Promise<any>}
+     */
+    protected fetchOldData(key: DynamoDB.Key): Promise<any> {
+        if (this.onUpdateMergeFields.length == 0) {
+            return Promise.resolve({});
+        }
+
+        const param: DynamoDB.GetItemInput = {
+            TableName: this.table,
+            Key: key,
+            ProjectionExpression: this.onUpdateMergeFields.join(',')
+        };
+
+        return this.getDocumentClient().get(param).promise()
+            .then((results: DynamoDB.GetItemOutput) => {
+                if (results.Item) {
+                    return Promise.resolve(results.Item);
+                } else {
+                    return Promise.reject(new NotFoundError);
+                }
+            });
     }
 
 }
