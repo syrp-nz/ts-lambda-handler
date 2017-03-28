@@ -154,12 +154,13 @@ export abstract class DynamoHandler extends AbstractHandler {
             return this.getDocumentClient().get(param).promise()
                 .then((results: DynamoDB.GetItemOutput): Promise<void> => {
                     if (results.Item) {
-                        this.scrubDataForRead(results.Item)
-                        this.response.setBody(results.Item).send();
-                        return Promise.resolve();
+                        return this.formatResult(results.Item);
                     } else {
                         return Promise.reject(new NotFoundError);
                     }
+                }).then(data => {
+                    this.response.setBody(data).send();
+                    return Promise.resolve();
                 });
         })
 
@@ -327,11 +328,39 @@ export abstract class DynamoHandler extends AbstractHandler {
      * @return {Promise<any>}                 [description]
      */
     protected formatSearchResult(results: DynamoDB.QueryOutput): Promise<any> {
-        results.Items.forEach((item) => {this.scrubDataForRead(item)});
+        // Remove the counts
         delete results.Count;
         delete results.ScannedCount;
-        return Promise.resolve(results);
+
+        // Format each item individually
+        const promises:Promise<any>[] = [];
+        for (let item of results.Items) {
+            promises.push(this.formatResult(item));
+        }
+
+        return Promise.all(promises).then(() => Promise.resolve(results));
     }
+
+    /**
+     * Format an individual result item before it's returned to the client.
+     * @param  {any}          item [description]
+     * @return {Promise<any>}      [description]
+     */
+    private formatResult(item: any): Promise<any> {
+        item = this.scrubDataForRead(item);
+        return this.augmentData(item);
+    }
+
+    /**
+     * This method is run for each item before it is being returned to the client. It can be overridden if to tweak
+     * results sent to the client. e.g.: Add a calculated read only field.
+     * @param  {any}          item [description]
+     * @return {Promise<any>}      [description]
+     */
+    protected augmentData(item:any): Promise<any> {
+        return Promise.resolve(item);
+    }
+
 
     /**
      * This method should be called on data item before being returned to the client. It removes all black listed
@@ -354,7 +383,7 @@ export abstract class DynamoHandler extends AbstractHandler {
      * @return {any}
      */
     protected scrubDataForWrite(item:any): any {
-        this.scrubDataForRead(item);
+        item = this.scrubDataForRead(item);
 
         for (let fieldPath of this.readonlyFields) {
             this.removeItem(item, fieldPath.split('.'));
@@ -418,7 +447,8 @@ export abstract class DynamoHandler extends AbstractHandler {
             return this.getDocumentClient().put(params).promise()
         }).then((response: DynamoDB.PutItemOutput) => {
             // Send the new item back to the client
-            this.scrubDataForRead(data);
+            return this.formatResult(data);
+        }).then((data) => {
             this.response.setStatusCode(201).setBody(data).send();
             return Promise.resolve();
         })
@@ -460,7 +490,8 @@ export abstract class DynamoHandler extends AbstractHandler {
             return this.getDocumentClient().put(params).promise();
         }).then((response: DynamoDB.PutItemOutput) => {
             // Send the new item back to the client
-            this.scrubDataForRead(data);
+            return this.formatResult(data);
+        }).then((data) => {
             this.response.setStatusCode(200).setBody(data).send();
             return Promise.resolve();
         })
