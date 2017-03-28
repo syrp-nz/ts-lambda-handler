@@ -43,6 +43,11 @@ export abstract class DynamoHandler extends AbstractHandler {
     protected blacklistedFields:string[] = [];
 
     /**
+     * These fields can be outputed back to the client on read request, but will be purge from creation/update request.
+     */
+    protected readonlyFields:string[] = [];
+
+    /**
      * The search index that will be used for the general listing GET request. Leave blank if you want to use the default index.
      */
     protected searchIndex:string = '';
@@ -127,7 +132,7 @@ export abstract class DynamoHandler extends AbstractHandler {
             return client.get(param).promise()
                 .then((results: DynamoDB.GetItemOutput): Promise<void> => {
                     if (results.Item) {
-                        this.scrubData(results.Item)
+                        this.scrubDataForRead(results.Item)
                         this.response.setBody(results.Item).send();
                         return Promise.resolve();
                     } else {
@@ -301,19 +306,36 @@ export abstract class DynamoHandler extends AbstractHandler {
      * @return {Promise<any>}                 [description]
      */
     protected formatSearchResult(results: DynamoDB.QueryOutput): Promise<any> {
-        results.Items.forEach((item) => {this.scrubData(item)});
+        results.Items.forEach((item) => {this.scrubDataForRead(item)});
         delete results.Count;
         delete results.ScannedCount;
         return Promise.resolve(results);
     }
 
     /**
-     * Remove all black listed fields from the item.
+     * This method should be called on data item before being returned to the client. It removes all black listed
+     * fields from the item.
      * @param  {any} item
      * @return {any}
      */
-    protected scrubData(item:any): any {
+    protected scrubDataForRead(item:any): any {
         for (let fieldPath of this.blacklistedFields) {
+            this.removeItem(item, fieldPath.split('.'));
+        }
+
+        return item;
+    }
+
+    /**
+     * This method should be called on data item before saving them to Dynamo. It removes all black listed and readonly
+     * fields from the item.
+     * @param  {any} item
+     * @return {any}
+     */
+    protected scrubDataForWrite(item:any): any {
+        this.scrubDataForRead(item);
+
+        for (let fieldPath of this.readonlyFields) {
             this.removeItem(item, fieldPath.split('.'));
         }
 
@@ -354,6 +376,7 @@ export abstract class DynamoHandler extends AbstractHandler {
     protected create(): Promise<void> {
         // Get the data we want to save
         let data = this.getBodyData();
+        data = this.scrubDataForWrite(data);
 
         return this.getSingleKey(true).then(key => {
             // We get a new key and merge the results with the existing data
@@ -374,7 +397,7 @@ export abstract class DynamoHandler extends AbstractHandler {
             return client.put(params).promise()
         }).then((response: DynamoDB.PutItemOutput) => {
             // Send the new item back to the client
-            this.scrubData(data);
+            this.scrubDataForRead(data);
             this.response.setStatusCode(201).setBody(data).send();
             return Promise.resolve();
         })
