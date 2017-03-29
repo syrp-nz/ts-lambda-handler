@@ -1,3 +1,4 @@
+import { ProxyHandler, APIGatewayEvent, Context, ProxyCallback } from 'aws-lambda';
 import { AbstractHandler } from './AbstractHandler';
 import { Request } from '../Request';
 import { Response } from '../Response';
@@ -57,14 +58,22 @@ export abstract class DynamoHandler extends AbstractHandler {
      */
     protected onUpdateMergeFields:string[] = [];
 
-    protected expressionAttributeNames: Map<string> = {};
-    protected expressionAttributeValues: Map<any> = {};
+    protected expressionAttributeNames: Map<string>;
+    protected expressionAttributeValues: Map<any>;
 
     /**
      * Instance of Document Client use to communicate with DynamoDB.
      * @type {DynamoDB.DocumentClient}
      */
     private docClient: DynamoDB.DocumentClient;
+
+    protected init(event: APIGatewayEvent, context: Context, callback: ProxyCallback): Promise<void> {
+        return super.init(event,context,callback).then(() => {
+            // Those values should be unique for each request. So we instanciate them here.
+            this.expressionAttributeNames = {};
+            this.expressionAttributeValues = {};
+        });
+    }
 
 
     public process(request:Request, response:Response): Promise<void> {
