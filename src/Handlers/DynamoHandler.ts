@@ -87,14 +87,14 @@ export abstract class DynamoHandler extends AbstractHandler {
                 break;
             case "PUT":
                 if (this.isSingleRequest()) {
-                    this.update();
+                    p = this.update();
                 } else {
                     p = Promise.reject(new MethodNotAllowedError);
                 }
                 break;
             case "DELETE":
                 if (this.isSingleRequest()) {
-
+                    p = this.delete();
                 } else {
                     p = Promise.reject(new MethodNotAllowedError);
                 }
@@ -455,7 +455,7 @@ export abstract class DynamoHandler extends AbstractHandler {
     }
 
     /**
-     * Create a new entry in the DynamoDB table
+     * Update an existing entry in the DynamoDB table.
      * @return {Promise<void>} [description]
      */
     protected update(): Promise<void> {
@@ -493,6 +493,26 @@ export abstract class DynamoHandler extends AbstractHandler {
             return this.formatResult(data);
         }).then((data) => {
             this.response.setStatusCode(200).setBody(data).send();
+            return Promise.resolve();
+        })
+    }
+
+    /**
+     * Delete an entry from the DynamoDB table.
+     * @return {Promise<void>}
+     */
+    protected delete(): Promise<void> {
+        // Get the data we want to save
+        return this.getSingleKey().then(key => {
+            // Delete the entry
+            const params: DynamoDB.DeleteItemInput = {
+                TableName : this.table,
+                Key: key
+            };
+            return this.getDocumentClient().delete(params).promise();
+        }).then((response: DynamoDB.DeleteItemOutput) => {
+            // Send an empty response to the smelly client.
+            this.response.setStatusCode(204).send();
             return Promise.resolve();
         })
     }
