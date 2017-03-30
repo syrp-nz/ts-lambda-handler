@@ -58,6 +58,11 @@ export abstract class DynamoHandler extends AbstractHandler {
      */
     protected onUpdateMergeFields:string[] = [];
 
+    /**
+     * What operation to use when performing the search.
+     */
+    protected searchOperation: "scan" | "query" = "query";
+
     protected expressionAttributeNames: Map<string>;
     protected expressionAttributeValues: Map<any>;
 
@@ -194,14 +199,21 @@ export abstract class DynamoHandler extends AbstractHandler {
      */
     protected search(): Promise<void> {
         return this.searchValidation().then(() => {
-            const param = this.initSearch();
+            let p: Promise<any>;
 
-            return this.getDocumentClient().query(param).promise()
-                .then((results) => this.formatSearchResult(results))
-                .then((formattedResults) => {
-                    this.response.setBody(formattedResults).send();
-                    return Promise.resolve();
-                });
+            if (this.searchOperation == 'query') {
+                p = this.getDocumentClient().query(this.initSearch()).promise();
+            } else {
+                p = this.getDocumentClient().scan(this.initScanRequest()).promise();
+            }
+
+
+            return p.then((results) => {
+                return this.formatSearchResult(results);
+            }).then((formattedResults) => {
+                this.response.setBody(formattedResults).send();
+                return Promise.resolve();
+            });
         });
     }
 
@@ -255,6 +267,19 @@ export abstract class DynamoHandler extends AbstractHandler {
         }
 
         this.setProjectionOnRequest(params);
+
+        return params;
+    }
+
+    protected initScanRequest(): DynamoDB.ScanInput {
+        const params: DynamoDB.QueryInput = this.initSearch();
+        if (params.FilterExpression) {
+            params.FilterExpression = '(' + params.KeyConditionExpression + ') AND (' + params.FilterExpression + ')';
+        } else {
+            params.FilterExpression = params.KeyConditionExpression;
+        }
+
+        delete params.KeyConditionExpression;
 
         return params;
     }
