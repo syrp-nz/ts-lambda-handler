@@ -1,3 +1,4 @@
+import { ProxyHandler, APIGatewayEvent, Context, ProxyCallback } from 'aws-lambda';
 import { AbstractHandler } from './AbstractHandler';
 import * as AWS from 'aws-sdk';
 import { Request } from '../Request';
@@ -20,8 +21,8 @@ export class ProcessQueueHandler extends AbstractHandler {
 
     protected arn:SQSQueueARN;
 
-    protected jobErrors:Map<any> = {};
-    protected jobSuccesses:Map<AWS.Lambda.InvocationResponse> = {};
+    protected jobErrors:Map<any>;
+    protected jobSuccesses:Map<AWS.Lambda.InvocationResponse>;
 
     /**
      * Intanciate the QueuingHandler
@@ -34,6 +35,12 @@ export class ProcessQueueHandler extends AbstractHandler {
     ) {
         super(config);
         this.arn = SQSQueueARN.normalize(arn);
+    }
+
+    protected init(event: APIGatewayEvent, context: Context, callback: ProxyCallback): Promise<void> {
+        this.jobErrors = {};
+        this.jobSuccesses = {};
+        return super.init(event, context, callback)
     }
 
     public process(request:Request, response:Response): Promise<void> {
