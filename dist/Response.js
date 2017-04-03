@@ -1,5 +1,4 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 var buffer_1 = require("buffer");
 var Functions_1 = require("./Utilities/Functions");
 var Response = (function () {
@@ -87,7 +86,7 @@ var Response = (function () {
         if (error.passthrough) {
             this.statusCode = error.statusCode;
             this.setBody(error.body ? error.body : null);
-            this.send();
+            this.callback(null, this);
         }
         else {
             this.callback(error);

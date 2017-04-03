@@ -1,9 +1,17 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
+var Errors_1 = require("./Errors");
 var Url = require("url");
 var Request = (function () {
     function Request(event) {
         this.event = event;
+        // Make sure our Parameter arrays always resolve to objects
+        if (this.event.queryStringParameters == null) {
+            this.event.queryStringParameters = {};
+        }
+        if (this.event.pathParameters == null) {
+            this.event.pathParameters = {};
+        }
+        // Normalize the keys for objects that should have case insensitive keys.
         this.normalizeKeys(this.event.headers);
         this.normalizeKeys(this.event.queryStringParameters);
         this.normalizeKeys(this.event.pathParameters);
@@ -140,11 +148,16 @@ var Request = (function () {
     };
     /**
      * Attempt to parse the body content has defined by the content type header
+     * @param   {string}    type    Optional parameter to explicitely define the MIME type to use when parsing the body.
      * @return {any}
      */
-    Request.prototype.getParseBody = function () {
+    Request.prototype.getParseBody = function (type) {
+        if (type === void 0) { type = ''; }
+        if (type == '') {
+            type = this.getContentType();
+        }
         var parseBody = null;
-        switch (this.getContentType()) {
+        switch (type) {
             case 'text/json':
             case 'text/x-json':
             case 'application/json':
@@ -158,10 +171,22 @@ var Request = (function () {
     };
     /**
      * Attempt to parse the request body as JSON.
+     * @throws BadRequestError
      * @return {any}
      */
     Request.prototype.getBodyAsJSON = function () {
-        return JSON.parse(this.event.body);
+        try {
+            var data = JSON.parse(this.event.body);
+            if (typeof data == 'object') {
+                return data;
+            }
+            else {
+                throw new Errors_1.BadRequestError();
+            }
+        }
+        catch (error) {
+            throw new Errors_1.BadRequestError();
+        }
     };
     return Request;
 }());

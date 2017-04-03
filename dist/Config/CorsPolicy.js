@@ -1,5 +1,4 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 var CorsPolicy = (function () {
     function CorsPolicy(config) {
         this.config = config;

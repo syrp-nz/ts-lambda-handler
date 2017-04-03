@@ -77,11 +77,13 @@ export declare class Request {
     getOriginProtocol(): string;
     /**
      * Attempt to parse the body content has defined by the content type header
+     * @param   {string}    type    Optional parameter to explicitely define the MIME type to use when parsing the body.
      * @return {any}
      */
-    getParseBody(): any;
+    getParseBody(type?: string): any;
     /**
      * Attempt to parse the request body as JSON.
+     * @throws BadRequestError
      * @return {any}
      */
     getBodyAsJSON(): any;
