@@ -24,11 +24,14 @@ var ProcessQueueHandler = (function (_super) {
         if (config === void 0) { config = {}; }
         var _this = _super.call(this, config) || this;
         _this.config = config;
-        _this.jobErrors = {};
-        _this.jobSuccesses = {};
         _this.arn = Utilities_1.SQSQueueARN.normalize(arn);
         return _this;
     }
+    ProcessQueueHandler.prototype.init = function (event, context, callback) {
+        this.jobErrors = {};
+        this.jobSuccesses = {};
+        return _super.prototype.init.call(this, event, context, callback);
+    };
     ProcessQueueHandler.prototype.process = function (request, response) {
         var _this = this;
         return this.readMessages()

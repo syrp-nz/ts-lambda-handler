@@ -1,10 +1,13 @@
+import { ProxyHandler, APIGatewayEvent, Context, ProxyCallback } from 'aws-lambda';
 import { AbstractHandler } from './AbstractHandler';
 import { Request } from '../Request';
 import { Response } from '../Response';
 import { DynamoDB } from 'aws-sdk';
-import { ValidationError } from '../Errors/ValidationError';
+import { ValidationError, NotFoundError, MethodNotAllowedError } from '../Errors';
 import * as JOI from 'joi';
 import { Map } from '../Map';
+import * as uniqid from 'uniqid';
+import * as extend from 'extend';
 
 /**
  * An Handler to implement a REST endpoint for a Dynamo table.
@@ -42,40 +45,175 @@ export abstract class DynamoHandler extends AbstractHandler {
     protected blacklistedFields:string[] = [];
 
     /**
-     * The search index that will be used for the general listing GET request. Leave blank if you want to use the default index.
+     * These fields can be outputed back to the client on read request, but will be purge from creation/update request.
      */
-    protected searchIndex:string = '';
+    protected readonlyFields:string[] = [];
 
-    protected expressionAttributeNames: Map<string> = {};
-    protected expressionAttributeValues: Map<any> = {};
+    /**
+     * List of field to retrieve and merge with update statements. If defined this will cause the update function to
+     * fetch a few fields from the existing record and merge them with the new value that will be put in the table.
+     *
+     * This can be helpfull to preserve attributes that the client can not modify directly, but that must still be
+     * retained. e.g.: creation date
+     */
+    protected onUpdateMergeFields:string[] = [];
+
+    /**
+     * What operation to use when performing the search.
+     */
+    protected searchOperation: "scan" | "query" = "query";
+
+    protected expressionAttributeNames: Map<string>;
+    protected expressionAttributeValues: Map<any>;
+
+    /**
+     * Instance of Document Client use to communicate with DynamoDB.
+     * @type {DynamoDB.DocumentClient}
+     */
+    private docClient: DynamoDB.DocumentClient;
+
+    protected init(event: APIGatewayEvent, context: Context, callback: ProxyCallback): Promise<void> {
+        return super.init(event,context,callback).then(() => {
+            // Those values should be unique for each request. So we instanciate them here.
+            this.expressionAttributeNames = {};
+            this.expressionAttributeValues = {};
+        });
+    }
 
 
     public process(request:Request, response:Response): Promise<void> {
+        let p: Promise<void>;
+
         switch (request.getMethod()) {
             case "GET":
-                if (request.getResourceId()) {
-
+                if (this.isSingleRequest()) {
+                    p = this.retrieveSingle();
                 } else {
-                    return this.search();
+                    p = this.search();
+                }
+                break;
+            case "POST":
+                if (this.isSingleRequest()) {
+                    p = Promise.reject(new MethodNotAllowedError);
+                } else {
+                    p = this.create();
+                }
+                break;
+            case "PUT":
+                if (this.isSingleRequest()) {
+                    p = this.update();
+                } else {
+                    p = Promise.reject(new MethodNotAllowedError);
+                }
+                break;
+            case "DELETE":
+                if (this.isSingleRequest()) {
+                    p = this.delete();
+                } else {
+                    p = Promise.reject(new MethodNotAllowedError);
                 }
                 break;
             case "OPTIONS":
                 response.send();
+                p = Promise.resolve();
                 break;
+            default:
+                p = Promise.reject(new MethodNotAllowedError);
         }
+
+        return p;
     }
 
-    protected search(): Promise<void> {
-        return this.searchValidation().then(() => {
-            const param = this.initSearch();
+    /**
+     * Provide an instance of DocumentClient to communicate with DynamoDB.
+     * @return {DynamoDB.DocumentClient} [description]
+     */
+    protected getDocumentClient(): DynamoDB.DocumentClient {
+        if (!this.docClient) {
+            this.docClient = new DynamoDB.DocumentClient;
+        }
 
-            const client = new DynamoDB.DocumentClient();
-            return client.query(param).promise()
-                .then((results) => this.formatSearchResult(results))
-                .then((formattedResults) => {
-                    this.response.setBody(formattedResults).send();
+        return this.docClient;
+    }
+
+    /**
+     * Analyze the request and detects if the request is for a specific entry. e.g.: retriving, updating, deleteing a
+     * specific record.
+     *
+     * This method assumes you are using an id path parameter for this purpose. You may override it if your set up is
+     * different.
+     *
+     * @return {boolean}
+     */
+    protected isSingleRequest(): boolean {
+        return this.request.getResourceId() != '';
+    }
+
+    /**
+     * Retrive a specific item from the DynamoDB table.
+     * @return {Promise<void>}
+     */
+    protected retrieveSingle(): Promise<void> {
+        return this.getSingleKey().then(key => {
+            const param: DynamoDB.GetItemInput = {
+                TableName: this.table,
+                Key: key,
+                ProjectionExpression: this.getProjectionExpression()
+            };
+
+            if (param.ProjectionExpression == '*' || param.ProjectionExpression == '') {
+                delete param.ProjectionExpression;
+            }
+
+            return this.getDocumentClient().get(param).promise()
+                .then((results: DynamoDB.GetItemOutput): Promise<void> => {
+                    if (results.Item) {
+                        return this.formatResult(results.Item);
+                    } else {
+                        return Promise.reject(new NotFoundError);
+                    }
+                }).then(data => {
+                    this.response.setBody(data).send();
                     return Promise.resolve();
                 });
+        })
+
+    }
+
+    /**
+     * Return a key suitable for retriveing, deleting or updating a single item in the Dynamo table.
+     *
+     * The basic function assumes your key uses an ID column, but you can override this function if your table uses a
+     * different key.
+     * @param {boolean} newEntry If this is set to true, a unique id will be generated. This is suitable for creting a
+     *                           new entry
+     * @return {Promise<DynamoDB.Key>}
+     */
+    protected getSingleKey(newEntry: boolean = false): Promise<DynamoDB.Key> {
+        return Promise.resolve({'id': newEntry ? uniqid() : this.request.getResourceId()});
+    }
+
+    /**
+     * Search the DynamoDB table for records matchign the query.
+     * @return {Promise<void>}
+     */
+    protected search(): Promise<void> {
+        return this.searchValidation().then(() => {
+            let p: Promise<any>;
+
+            if (this.searchOperation == 'query') {
+                p = this.getDocumentClient().query(this.initSearch()).promise();
+            } else {
+                p = this.getDocumentClient().scan(this.initScanRequest()).promise();
+            }
+
+
+            return p.then((results) => {
+                return this.formatSearchResult(results);
+            }).then((formattedResults) => {
+                this.response.setBody(formattedResults).send();
+                return Promise.resolve();
+            });
         });
     }
 
@@ -95,6 +233,10 @@ export abstract class DynamoHandler extends AbstractHandler {
         }
     }
 
+    /**
+     * Return a JOI Schema for validating the search request. You may override this function to add your own validation.
+     * @return {JOI.SchemaMap}
+     */
     protected searchValidationSchema(): JOI.SchemaMap {
         const schemaMap: JOI.SchemaMap = {
             limit: JOI.number().integer().min(0).max(150)
@@ -102,6 +244,10 @@ export abstract class DynamoHandler extends AbstractHandler {
         return schemaMap;
     }
 
+    /**
+     * Build the parameters for the Query request to DynamoDB
+     * @return {DynamoDB.QueryInput} [description]
+     */
     protected initSearch(): DynamoDB.QueryInput {
         const params: DynamoDB.QueryInput = {
             TableName: this.table,
@@ -120,6 +266,30 @@ export abstract class DynamoHandler extends AbstractHandler {
             params.ExpressionAttributeValues = this.expressionAttributeValues;
         }
 
+        this.setProjectionOnRequest(params);
+
+        return params;
+    }
+
+    protected initScanRequest(): DynamoDB.ScanInput {
+        const params: DynamoDB.QueryInput = this.initSearch();
+        if (params.FilterExpression) {
+            params.FilterExpression = '(' + params.KeyConditionExpression + ') AND (' + params.FilterExpression + ')';
+        } else {
+            params.FilterExpression = params.KeyConditionExpression;
+        }
+
+        delete params.KeyConditionExpression;
+
+        return params;
+    }
+
+    /**
+     * Set the Select and ProjectionExpression field on a request.
+     * @param  {DynamoDB.QueryInput} params
+     * @return void
+     */
+    protected setProjectionOnRequest(params: DynamoDB.QueryInput): void {
         const projectionExp = this.getProjectionExpression();
         switch(projectionExp) {
             case '*':
@@ -132,8 +302,6 @@ export abstract class DynamoHandler extends AbstractHandler {
                 params.Select = 'SPECIFIC_ATTRIBUTES';
                 params.ProjectionExpression = projectionExp;
         }
-
-        return params;
     }
 
     /**
@@ -194,19 +362,64 @@ export abstract class DynamoHandler extends AbstractHandler {
      * @return {Promise<any>}                 [description]
      */
     protected formatSearchResult(results: DynamoDB.QueryOutput): Promise<any> {
-        results.Items.forEach((item) => {this.scrubData(item)});
+        // Remove the counts
         delete results.Count;
         delete results.ScannedCount;
-        return Promise.resolve(results);
+
+        // Format each item individually
+        const promises:Promise<any>[] = [];
+        for (let item of results.Items) {
+            promises.push(this.formatResult(item));
+        }
+
+        return Promise.all(promises).then(() => Promise.resolve(results));
     }
 
     /**
-     * Remove all black listed fields from the item.
+     * Format an individual result item before it's returned to the client.
+     * @param  {any}          item [description]
+     * @return {Promise<any>}      [description]
+     */
+    private formatResult(item: any): Promise<any> {
+        item = this.scrubDataForRead(item);
+        return this.augmentData(item);
+    }
+
+    /**
+     * This method is run for each item before it is being returned to the client. It can be overridden if to tweak
+     * results sent to the client. e.g.: Add a calculated read only field.
+     * @param  {any}          item [description]
+     * @return {Promise<any>}      [description]
+     */
+    protected augmentData(item:any): Promise<any> {
+        return Promise.resolve(item);
+    }
+
+
+    /**
+     * This method should be called on data item before being returned to the client. It removes all black listed
+     * fields from the item.
      * @param  {any} item
      * @return {any}
      */
-    protected scrubData(item:any): any {
+    protected scrubDataForRead(item:any): any {
         for (let fieldPath of this.blacklistedFields) {
+            this.removeItem(item, fieldPath.split('.'));
+        }
+
+        return item;
+    }
+
+    /**
+     * This method should be called on data item before saving them to Dynamo. It removes all black listed and readonly
+     * fields from the item.
+     * @param  {any} item
+     * @return {any}
+     */
+    protected scrubDataForWrite(item:any): any {
+        item = this.scrubDataForRead(item);
+
+        for (let fieldPath of this.readonlyFields) {
             this.removeItem(item, fieldPath.split('.'));
         }
 
@@ -218,7 +431,7 @@ export abstract class DynamoHandler extends AbstractHandler {
      * @param  {any}      item
      * @param  {string[]} path
      */
-    protected removeItem(item:any, path:string[]) {
+    private removeItem(item:any, path:string[]) {
         const fieldName = path.shift();
         if (item[fieldName]) {
             if (path.length == 0) {
@@ -227,6 +440,198 @@ export abstract class DynamoHandler extends AbstractHandler {
                 this.removeItem(item[fieldName], path);
             }
         }
+    }
+
+    /**
+     * Retrieve the data from the request for a POST or a PUT. You may override this method if the data needs to be
+     * altered in any way before being saved to the DynamoDB table.
+     * @throws BadRequestError
+     * @return {any}
+     */
+    protected getBodyData(): any {
+        let data = this.request.getBodyAsJSON();
+        return data;
+    }
+
+    /**
+     * Create a new entry in the DynamoDB table
+     * @return {Promise<void>} [description]
+     */
+    protected create(): Promise<void> {
+        // Get the data we want to save
+        let data = this.getBodyData();
+        data = this.scrubDataForWrite(data);
+
+        return this.getSingleKey(true).then(key => {
+            // We get a new key and merge the results with the existing data
+            Object.assign(data, key);
+            return this.itemValidation(data);
+        }).then(() => {
+            // Augment our data with some interesting bits of info
+            return this.preCreation(data);
+        }).then((augmentedData) => {
+            data = augmentedData;
+            // Do the Putting.
+            const params: DynamoDB.PutItemInput = {
+                TableName : this.table,
+                Item: data,
+                ConditionExpression: 'attribute_not_exists(id)'
+            }
+
+            return this.getDocumentClient().put(params).promise()
+        }).then((response: DynamoDB.PutItemOutput) => {
+            // Send the new item back to the client
+            return this.formatResult(data);
+        }).then((data) => {
+            this.response.setStatusCode(201).setBody(data).send();
+            return Promise.resolve();
+        })
+    }
+
+    /**
+     * Update an existing entry in the DynamoDB table.
+     * @return {Promise<void>} [description]
+     */
+    protected update(): Promise<void> {
+        // Get the data we want to save
+        let data:any = this.getBodyData();
+        data = this.scrubDataForWrite(data);
+
+        let old: any;
+        let key: DynamoDB.Key;
+
+        return this.getSingleKey().then(itemKey => {
+            key = itemKey;
+            // We get a new key and merge the results with the existing data
+            Object.assign(data, key);
+            return this.itemValidation(data);
+        }).then(() => {
+            return this.fetchOldData(key);
+        }).then((oldData) => {
+            old = oldData;
+            // Augment our data with some interesting bits of info
+            return this.preUpdate(data, old);
+        }).then((augmentedData) => {
+            data = augmentedData;
+
+            // Do the Putting.
+            const params: DynamoDB.PutItemInput = {
+                TableName : this.table,
+                Item: data,
+                ConditionExpression: 'attribute_exists(id)'
+            }
+
+            return this.getDocumentClient().put(params).promise();
+        }).then((response: DynamoDB.PutItemOutput) => {
+            // Send the new item back to the client
+            return this.formatResult(data);
+        }).then((data) => {
+            this.response.setStatusCode(200).setBody(data).send();
+            return Promise.resolve();
+        })
+    }
+
+    /**
+     * Delete an entry from the DynamoDB table.
+     * @return {Promise<void>}
+     */
+    protected delete(): Promise<void> {
+        // Get the data we want to save
+        return this.getSingleKey().then(key => {
+            // Delete the entry
+            const params: DynamoDB.DeleteItemInput = {
+                TableName : this.table,
+                Key: key
+            };
+            return this.getDocumentClient().delete(params).promise();
+        }).then((response: DynamoDB.DeleteItemOutput) => {
+            // Send an empty response to the smelly client.
+            this.response.setStatusCode(204).send();
+            return Promise.resolve();
+        })
+    }
+
+    /**
+     * Validate the data for a POST or PUT request. Validation should be returned via a Promise Rejection, ideally with
+     * a Validation Error. You may override this method to customize your validation. Validation rules can be provided
+     * via `itemValidationSchema` as well.
+     *
+     * For creation request, the data will have a unique key assign to it so you.
+     *
+     * @param {any} data Data to validate
+     * @return {Promise<void>}
+     */
+    protected itemValidation(data: any): Promise<void> {
+        const result = JOI.validate( data, JOI.object().keys(this.itemValidationSchema()) );
+        if (result.error) {
+            return Promise.reject(new ValidationError(result.error.details));
+        } else {
+            return Promise.resolve();
+        }
+    }
+
+    /**
+     * Return a JOI Schema for validating the items that will added or updated in the DynamoDB table.
+     * @return {JOI.SchemaMap}
+     */
+    protected itemValidationSchema(): JOI.SchemaMap {
+        const schemaMap: JOI.SchemaMap = {
+            id: JOI.string().required()
+        }
+        return schemaMap;
+    }
+
+    /**
+     * This method is called just before creating an item in the table and after the item has passed validation. You can
+     * override it to augment the data that will be store in the database. e.g.: By adding a creation timestamp or a
+     * created by field.
+     * @param  {any}           data [description]
+     * @return {Promise<any>}      [description]
+     */
+    protected preCreation(data: any): Promise<any> {
+        return Promise.resolve(data);
+    }
+
+    /**
+     * This method is called just before updating an item in the table and after the item has passed validation. You can
+     * override it to augment the data that will be store in the database. e.g.: By adding a updated at timestamp or a
+     * updated by field.
+     *
+     * The default behavior is to merge the old data into the new one.
+     *
+     * @param  {any}           data New data that's about to be saved to Dynamo
+     * @param  {any}           old  Fields from the current record as retrieved by `fetchOldData`
+     * @return {Promise<void>}      [description]
+     */
+    protected preUpdate(data: any, old:any): Promise<any> {
+        data = extend(true, data, old);
+        return Promise.resolve(data);
+    }
+
+    /**
+     * Retrieve some fields from a current record. The list of fieldss returned is defined via `onUpdateMergeFields`.
+     * @param  {DynamoDB.Key} key
+     * @return {Promise<any>}
+     */
+    protected fetchOldData(key: DynamoDB.Key): Promise<any> {
+        if (this.onUpdateMergeFields.length == 0) {
+            return Promise.resolve({});
+        }
+
+        const param: DynamoDB.GetItemInput = {
+            TableName: this.table,
+            Key: key,
+            ProjectionExpression: this.onUpdateMergeFields.join(',')
+        };
+
+        return this.getDocumentClient().get(param).promise()
+            .then((results: DynamoDB.GetItemOutput) => {
+                if (results.Item) {
+                    return Promise.resolve(results.Item);
+                } else {
+                    return Promise.reject(new NotFoundError);
+                }
+            });
     }
 
 }

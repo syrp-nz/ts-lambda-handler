@@ -1,8 +1,17 @@
 "use strict";
+var Errors_1 = require("./Errors");
 var Url = require("url");
 var Request = (function () {
     function Request(event) {
         this.event = event;
+        // Make sure our Parameter arrays always resolve to objects
+        if (this.event.queryStringParameters == null) {
+            this.event.queryStringParameters = {};
+        }
+        if (this.event.pathParameters == null) {
+            this.event.pathParameters = {};
+        }
+        // Normalize the keys for objects that should have case insensitive keys.
         this.normalizeKeys(this.event.headers);
         this.normalizeKeys(this.event.queryStringParameters);
         this.normalizeKeys(this.event.pathParameters);
@@ -162,10 +171,22 @@ var Request = (function () {
     };
     /**
      * Attempt to parse the request body as JSON.
+     * @throws BadRequestError
      * @return {any}
      */
     Request.prototype.getBodyAsJSON = function () {
-        return JSON.parse(this.event.body);
+        try {
+            var data = JSON.parse(this.event.body);
+            if (typeof data == 'object') {
+                return data;
+            }
+            else {
+                throw new Errors_1.BadRequestError();
+            }
+        }
+        catch (error) {
+            throw new Errors_1.BadRequestError();
+        }
     };
     return Request;
 }());

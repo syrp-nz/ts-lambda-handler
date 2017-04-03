@@ -83,6 +83,7 @@ export declare class Request {
     getParseBody(type?: string): any;
     /**
      * Attempt to parse the request body as JSON.
+     * @throws BadRequestError
      * @return {any}
      */
     getBodyAsJSON(): any;

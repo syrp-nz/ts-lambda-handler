@@ -25,6 +25,18 @@ function decryptEnvVar(cipherVarName, decryptedVarName, encoding) {
     if (!decryptedVarName) {
         decryptedVarName = cipherVarName;
     }
+    // AWS Lambda will cache some environement variable between executions.
+    // Check if the Decrypted flag for the current var has been set for DECRYPTED_ENV_VAR
+    var decryptedVars = [];
+    if (process.env.DECRYPTED_ENV_VAR != undefined) {
+        decryptedVars = process.env.DECRYPTED_ENV_VAR.split(',');
+        if (decryptedVars.indexOf(decryptedVarName) !== -1) {
+            return Promise.resolve();
+        }
+    }
+    else {
+        process.env.DECRYPTED_ENV_VAR = '';
+    }
     // If we don't specify an encdoging default to base 64.
     if (!encoding) {
         encoding = 'base64';
@@ -38,6 +50,10 @@ function decryptEnvVar(cipherVarName, decryptedVarName, encoding) {
     return kms.decrypt(params).promise().then(function (data) {
         // Store the decrypted value.
         process.env[decryptedVarName] = data.Plaintext.toString();
+        // Set the DECRYPTED_ENV_VAR flag with the decryptedVarName
+        decryptedVars = process.env.DECRYPTED_ENV_VAR.split(',');
+        decryptedVars.push(decryptedVarName);
+        process.env.DECRYPTED_ENV_VAR = decryptedVars.join(',');
         return Promise.resolve();
     });
 }

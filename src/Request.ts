@@ -1,9 +1,20 @@
 import {APIGatewayEvent} from 'aws-lambda';
+import { BadRequestError } from './Errors';
 import Url = require('url');
 
 export class Request {
 
     constructor(protected event: APIGatewayEvent) {
+        // Make sure our Parameter arrays always resolve to objects
+        if (this.event.queryStringParameters == null) {
+            this.event.queryStringParameters = {};
+        }
+
+        if (this.event.pathParameters == null) {
+            this.event.pathParameters = {};
+        }
+
+        // Normalize the keys for objects that should have case insensitive keys.
         this.normalizeKeys(this.event.headers);
         this.normalizeKeys(this.event.queryStringParameters);
         this.normalizeKeys(this.event.pathParameters);
@@ -174,10 +185,20 @@ export class Request {
 
     /**
      * Attempt to parse the request body as JSON.
+     * @throws BadRequestError
      * @return {any}
      */
     public getBodyAsJSON(): any {
-        return JSON.parse(this.event.body);
+        try {
+            const data = JSON.parse(this.event.body);
+            if (typeof data == 'object') {
+                return data;
+            } else {
+                throw new BadRequestError();
+            }
+        } catch (error) {
+            throw new BadRequestError();
+        }
     }
 
 }

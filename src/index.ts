@@ -5,15 +5,13 @@ import * as Handlers from './Handlers';
 import * as Utilities from './Utilities';
 
 
-import { Request } from './Request';
-import { Response } from './Response';
+export { Request } from './Request';
+export { Response } from './Response';
 
 export {
     Authorizers,
     Config,
     Errors,
     Handlers,
-    Request,
-    Response,
     Utilities
 }

@@ -8,6 +8,10 @@ const assert = chai.assert;
 describe('Request', () => {
     let request = new Lib.Request(fakeEvent);
 
+    it('constructor');
+
+    it('getBodyAsJSON');
+
     it( 'data', () => {
         assert.strictEqual(request.data, fakeEvent);
     });

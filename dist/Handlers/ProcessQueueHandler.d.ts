@@ -1,3 +1,4 @@
+import { APIGatewayEvent, Context, ProxyCallback } from 'aws-lambda';
 import { AbstractHandler } from './AbstractHandler';
 import * as AWS from 'aws-sdk';
 import { Request } from '../Request';
@@ -20,6 +21,7 @@ export declare class ProcessQueueHandler extends AbstractHandler {
      * @param  {ProcessQueueHandlerConfig} config
      */
     constructor(arn: AmazonResourceName | string, config?: ProcessQueueHandlerConfig);
+    protected init(event: APIGatewayEvent, context: Context, callback: ProxyCallback): Promise<void>;
     process(request: Request, response: Response): Promise<void>;
     /**
      * Read messages from the queue
