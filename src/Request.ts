@@ -1,6 +1,7 @@
 import {APIGatewayEvent} from 'aws-lambda';
-import { BadRequestError } from './Errors';
+import { BadRequestError, ValidationError } from './Errors';
 import Url = require('url');
+import * as JOI from 'joi';
 
 export class Request {
 
@@ -198,6 +199,24 @@ export class Request {
             }
         } catch (error) {
             throw new BadRequestError();
+        }
+    }
+
+    /**
+     * Validate the Query string parameter using the provided shcema. If the validation passes, a void promise is
+     * return. Otherwise the promise is rejected with an appropriate HTTP error
+     * @param  {JOI.SchemaMap} schema [description]
+     * @return {Promise<void>}        [description]
+     */
+    public validateQueryString(schema: JOI.SchemaMap): Promise<void> {
+        const result = JOI.validate(
+            this.data.queryStringParameters,
+            JOI.object().keys(schema)
+        );
+        if (result.error) {
+            return Promise.reject(new ValidationError(result.error.details));
+        } else {
+            return Promise.resolve();
         }
     }
 

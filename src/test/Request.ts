@@ -2,6 +2,7 @@ import {} from 'jasmine';
 import * as chai from 'chai';
 import * as Lib from '../index';
 import { fakeEvent } from './FakeEvent';
+import * as JOI from 'joi';
 
 const assert = chai.assert;
 
@@ -62,6 +63,32 @@ describe('Request', () => {
         fakeEvent.headers['Content-Type'] = undefined;
         request = new Lib.Request(fakeEvent);
         assert.equal(request.getContentType(), '');
-    })
+    });
+
+    it ('validateQueryString', () => {
+        request = new Lib.Request(fakeEvent);
+        // { key1: 'value', hello: 'world', foo: 'BAR' }
+        return request.validateQueryString({
+            'key1': JOI.string().required(),
+            'hello': JOI.string().required(),
+            'foo':  JOI.string().required(),
+            'optional': JOI.string(),
+        }).catch((error) => {
+            // Test a valid schema,
+            assert(false, 'Valid schema returns error');
+        }).then(() => {
+            // This will throw an error because `key1` is missing.
+            return request.validateQueryString({
+                'hello': JOI.string().required(),
+                'foo':  JOI.string().required()
+            })
+        }).then(() => {
+            assert(false, 'Invalid schema does not return error');
+        }).catch((error) => {
+            if (error.message != 'ValidationError') {
+                throw error;
+            }
+        });
+    });
 
 });
