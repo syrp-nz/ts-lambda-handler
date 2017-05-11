@@ -87,12 +87,36 @@ export class Response implements ProxyResult {
         return this;
     }
 
-
+    /**
+     * Send the resonse back to the client.
+     */
     public send(): void {
         this.callback(null, this);
     }
 
-    public fail(error): void {
+    /**
+     * Sends a response that should cause clients to navigate to the provided URL.
+     * @param {string} url [description]
+     */
+    public redirect(url: string): void {
+        this.addHeader('location', url).setStatusCode(302).setBody(null).send();
+    }
+
+    /**
+     * Send a failed response to the client. This method can be used to send both expected and unexpected errors.
+     *
+     * If the execution of your handler terminates via an expected exception (e.g: a user doesn't have the right to
+     * access a ressource or the resource doesn't exists), you can use this method to return a meaningfull HTTP error
+     * to the client. To do this provide an error object with a truty `passthrough` property, a `statusCode` property
+     * and an optional `body` property. If you handler is termiated this way, Lambda consider that your function as
+     * completed sucessfully.
+     *
+     * If you catch an unexpected error and pass it to this method, the handler will be terminate via Lambda's error
+     * callback. This will show up as a failed execution in your Lambda error logs and the client will recieved a 500
+     * Server Error response.
+     * @param {any} error
+     */
+    public fail(error:any): void {
         print_debug(error);
         if (error.passthrough) {
             this.statusCode = error.statusCode;

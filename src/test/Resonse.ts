@@ -41,4 +41,17 @@ describe('Response', () => {
 
     });
 
+    it('redirect', () => {
+        proxyResult = null;
+        response.redirect('https://example.com/abc.html');
+
+        console.dir(proxyResult);
+        assert.isOk(proxyResult);
+        assert.equal(proxyResult.statusCode, 302);
+        assert.isNotOk(proxyResult.body);
+        assert.isOk(proxyResult.headers);
+        assert.equal(proxyResult.headers['location'], 'https://example.com/abc.html');
+
+    });
+
 });
