@@ -12,9 +12,9 @@ export class Response implements ProxyResult {
 
     public statusCode:number = 200;
     public headers:{ [key: string] : string } = {};
-    public body:string = null;
+    public body:string = "";
 
-    protected _sent: boolean = false;
+    protected _sent: boolean = undefined;
 
     /**
      * Indicate whatever the response has been sent.
@@ -173,7 +173,7 @@ export class Response implements ProxyResult {
      * @param {string} url [description]
      */
     public redirect(url: string): void {
-        this.addHeader('location', url).setStatusCode(302).setBody(null).send();
+        this.addHeader('location', url).setStatusCode(302).setBody("").send();
     }
 
     /**
