@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var Request_1 = require("../Request");
 var Response_1 = require("../Response");
 var InternalServerError_1 = require("../Errors/InternalServerError");
@@ -30,7 +31,14 @@ var AbstractHandler = (function () {
                     return _this.authorize();
                 }).then(function () {
                     return _this.process(_this.request, _this.response);
-                }).catch(function (error) { _this.errorHandler(error); });
+                }).catch(function (error) {
+                    _this.errorHandler(error);
+                }).then(function () {
+                    // By this point, the response should have been sent.
+                    if (!_this.response.sent) {
+                        throw new Error('Handler Response was never sent.');
+                    }
+                });
             }
             catch (error) {
                 _this.errorHandler(error);

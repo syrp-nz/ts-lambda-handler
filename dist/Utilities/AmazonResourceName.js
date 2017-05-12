@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * Represent an Amazon Resource Name as defined on http://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html
  */

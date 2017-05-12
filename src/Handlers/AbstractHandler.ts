@@ -106,7 +106,14 @@ export abstract class AbstractHandler {
                     return this.authorize();
                 }).then(() => {
                     return this.process(this.request, this.response);
-                }).catch((error) => {this.errorHandler(error)});
+                }).catch((error) => {
+                    this.errorHandler(error)
+                }).then(() => {
+                    // By this point, the response should have been sent.
+                    if (!this.response.sent) {
+                        throw new Error('Handler Response was never sent.');
+                    }
+                });
 
         } catch (error) {
             this.errorHandler(error);

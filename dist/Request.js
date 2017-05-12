@@ -1,6 +1,8 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var Errors_1 = require("./Errors");
 var Url = require("url");
+var JOI = require("joi");
 var Request = (function () {
     function Request(event) {
         this.event = event;
@@ -186,6 +188,21 @@ var Request = (function () {
         }
         catch (error) {
             throw new Errors_1.BadRequestError();
+        }
+    };
+    /**
+     * Validate the Query string parameter using the provided shcema. If the validation passes, a void promise is
+     * return. Otherwise the promise is rejected with an appropriate HTTP error
+     * @param  {JOI.SchemaMap} schema [description]
+     * @return {Promise<void>}        [description]
+     */
+    Request.prototype.validateQueryString = function (schema) {
+        var result = JOI.validate(this.data.queryStringParameters, JOI.object().keys(schema));
+        if (result.error) {
+            return Promise.reject(new Errors_1.ValidationError(result.error.details));
+        }
+        else {
+            return Promise.resolve();
         }
     };
     return Request;

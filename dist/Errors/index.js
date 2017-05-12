@@ -1,4 +1,7 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var BadGatewayError_1 = require("./BadGatewayError");
+exports.BadGatewayError = BadGatewayError_1.BadGatewayError;
 var BadRequestError_1 = require("./BadRequestError");
 exports.BadRequestError = BadRequestError_1.BadRequestError;
 var ForbiddenError_1 = require("./ForbiddenError");

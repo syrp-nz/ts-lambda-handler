@@ -43,15 +43,28 @@ describe('Response', () => {
 
     it('redirect', () => {
         proxyResult = null;
+        assert.isFalse(response.sent);
         response.redirect('https://example.com/abc.html');
+        assert.isTrue(response.sent);
 
-        console.dir(proxyResult);
         assert.isOk(proxyResult);
         assert.equal(proxyResult.statusCode, 302);
         assert.isNotOk(proxyResult.body);
         assert.isOk(proxyResult.headers);
         assert.equal(proxyResult.headers['location'], 'https://example.com/abc.html');
 
+    });
+
+    it('sent', () => {
+        response = new Lib.Response(callback);
+        // Response should be unsent to begin with.
+        assert.isFalse(response.sent);
+
+        response.send();
+        assert.isTrue(response.sent);
+
+        // Trying to send an error a second time should faile
+        assert.throw(response.send);
     });
 
 });

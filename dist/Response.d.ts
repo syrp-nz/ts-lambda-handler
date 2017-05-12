@@ -7,6 +7,12 @@ export declare class Response implements ProxyResult {
         [key: string]: string;
     };
     body: string;
+    protected _sent: boolean;
+    /**
+     * Indicate whatever the response has been sent.
+     * @return {boolean} [description]
+     */
+    readonly sent: boolean;
     /**
      * Set the status code of the response. Defaults to 200.
      * @type {number}
@@ -40,6 +46,28 @@ export declare class Response implements ProxyResult {
      * @return {this}      [description]
      */
     setBody(body: any): this;
+    /**
+     * Send the resonse back to the client.
+     */
     send(): void;
+    /**
+     * Sends a response that should cause clients to navigate to the provided URL.
+     * @param {string} url [description]
+     */
+    redirect(url: string): void;
+    /**
+     * Send a failed response to the client. This method can be used to send both expected and unexpected errors.
+     *
+     * If the execution of your handler terminates via an expected exception (e.g: a user doesn't have the right to
+     * access a ressource or the resource doesn't exists), you can use this method to return a meaningfull HTTP error
+     * to the client. To do this provide an error object with a truty `passthrough` property, a `statusCode` property
+     * and an optional `body` property. If you handler is termiated this way, Lambda consider that your function as
+     * completed sucessfully.
+     *
+     * If you catch an unexpected error and pass it to this method, the handler will be terminate via Lambda's error
+     * callback. This will show up as a failed execution in your Lambda error logs and the client will recieved a 500
+     * Server Error response.
+     * @param {any} error
+     */
     fail(error: any): void;
 }

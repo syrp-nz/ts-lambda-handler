@@ -13,6 +13,16 @@ export class Response implements ProxyResult {
     public headers:{ [key: string] : string } = {};
     public body:string = null;
 
+    protected _sent: boolean = false;
+
+    /**
+     * Indicate whatever the response has been sent.
+     * @return {boolean} [description]
+     */
+    public get sent(): boolean {
+        return this._sent;
+    }
+
     /**
      * Set the status code of the response. Defaults to 200.
      * @type {number}
@@ -91,7 +101,12 @@ export class Response implements ProxyResult {
      * Send the resonse back to the client.
      */
     public send(): void {
+        if (this.sent) {
+            throw new Error('Response has already been sent.');
+        }
+
         this.callback(null, this);
+        this._sent = true;
     }
 
     /**
@@ -118,6 +133,11 @@ export class Response implements ProxyResult {
      */
     public fail(error:any): void {
         print_debug(error);
+
+        if (this.sent) {
+            throw new Error('Response has already been sent.');
+        }
+
         if (error.passthrough) {
             this.statusCode = error.statusCode;
             this.setBody(error.body ? error.body : null);
@@ -125,6 +145,8 @@ export class Response implements ProxyResult {
         } else {
             this.callback(error);
         }
+
+        this._sent = true;
     }
 
 }

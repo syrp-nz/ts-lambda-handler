@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var buffer_1 = require("buffer");
 var aws_sdk_1 = require("aws-sdk");
 var AmazonResourceName_1 = require("./AmazonResourceName");
@@ -125,6 +126,7 @@ function validateLambdaInvokeResponse(response) {
             return payload.statusCode == undefined || payload.statusCode < 400;
         }
         catch (error) {
+            // Can't convert the payload to JSON, will assume the request complete normally but didn't output JSON.
         }
     }
     return true;

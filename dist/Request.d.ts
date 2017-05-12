@@ -1,4 +1,5 @@
 import { APIGatewayEvent } from 'aws-lambda';
+import * as JOI from 'joi';
 export declare class Request {
     protected event: APIGatewayEvent;
     constructor(event: APIGatewayEvent);
@@ -87,4 +88,11 @@ export declare class Request {
      * @return {any}
      */
     getBodyAsJSON(): any;
+    /**
+     * Validate the Query string parameter using the provided shcema. If the validation passes, a void promise is
+     * return. Otherwise the promise is rejected with an appropriate HTTP error
+     * @param  {JOI.SchemaMap} schema [description]
+     * @return {Promise<void>}        [description]
+     */
+    validateQueryString(schema: JOI.SchemaMap): Promise<void>;
 }

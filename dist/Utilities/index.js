@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var AmazonResourceName_1 = require("./AmazonResourceName");
 exports.AmazonResourceName = AmazonResourceName_1.AmazonResourceName;
 var HtmlTemplate_1 = require("./HtmlTemplate");
