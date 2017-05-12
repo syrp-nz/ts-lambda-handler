@@ -67,4 +67,32 @@ describe('Response', () => {
         assert.throw(response.send);
     });
 
+    it('addCookie', function() {
+        assert.equal(response.addCookie('key', 'value').headers['set-cookie'], 'key=value; path=/; Secure; HttpOnly');
+        assert.equal(response.addCookie('key', 'value', {domain: 'example.com'}).headers['set-cookie'], 'key=value; domain=example.com; path=/; Secure; HttpOnly');
+
+        const dateTimeString = 'Wed, 07 Dec 2016 05:00:00 GMT'
+        assert.equal(response.addCookie('key', 'value', {expires: dateTimeString}).headers['set-cookie'], 'key=value; path=/; expires=' + dateTimeString + '; Secure; HttpOnly');
+        assert.equal(response.addCookie('key', 'value', {expires: new Date(dateTimeString)}).headers['set-cookie'], 'key=value; path=/; expires=' + dateTimeString + '; Secure; HttpOnly');
+
+        const maxAgeString = new Date(new Date().getTime() + 60 * 1000).toUTCString();
+        assert.equal(response.addCookie('key', 'value', {maxAge: 60}).headers['set-cookie'], 'key=value; path=/; expires=' + maxAgeString + '; Secure; HttpOnly');
+
+        assert.equal(response.addCookie('key', 'value', {maxAge: 60, expires: 'some date'}).headers['set-cookie'], 'key=value; path=/; expires=some date; Secure; HttpOnly');
+
+        assert.equal(response.addCookie('key', 'value', {secure: true}).headers['set-cookie'], 'key=value; path=/; Secure; HttpOnly');
+        assert.equal(response.addCookie('key', 'value', {secure: false}).headers['set-cookie'], 'key=value; path=/; HttpOnly');
+
+        assert.equal(response.addCookie('key', 'value', {httpOnly: true}).headers['set-cookie'], 'key=value; path=/; Secure; HttpOnly');
+        assert.equal(response.addCookie('key', 'value', {httpOnly: false}).headers['set-cookie'], 'key=value; path=/; Secure');
+
+        assert.equal(response.addCookie('key', 'value', {secure: true}).headers['set-cookie'], 'key=value; path=/; Secure; HttpOnly');
+        assert.equal(response.addCookie('key', 'value', {secure: false}).headers['set-cookie'], 'key=value; path=/; HttpOnly');
+
+        assert.equal(response.addCookie('key', 'value', {httpOnly: true, secure: true}).headers['set-cookie'], 'key=value; path=/; Secure; HttpOnly');
+        assert.equal(response.addCookie('key', 'value', {httpOnly: false, secure: true}).headers['set-cookie'], 'key=value; path=/; Secure');
+        assert.equal(response.addCookie('key', 'value', {httpOnly: true, secure: false}).headers['set-cookie'], 'key=value; path=/; HttpOnly');
+        assert.equal(response.addCookie('key', 'value', {httpOnly: false, secure: false}).headers['set-cookie'], 'key=value; path=/');
+    });
+
 });

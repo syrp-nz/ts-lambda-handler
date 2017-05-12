@@ -2,6 +2,7 @@ import { ProxyCallback, ProxyResult } from 'aws-lambda';
 import { HttpError } from './Errors/HttpError';
 import { Buffer } from 'buffer';
 import { print_debug } from './Utilities/Functions';
+import { CookieOptions } from './CookieOptions';
 
 declare const process:any;
 
@@ -40,7 +41,7 @@ export class Response implements ProxyResult {
      * @return {this}
      */
     public addHeader(key:string, value:string): this {
-        this.headers[key] = value;
+        this.headers[key.toLowerCase()] = value;
         return this;
     }
 
@@ -50,7 +51,9 @@ export class Response implements ProxyResult {
      * @return {this}
      */
     public addHeaders(headers: { [key: string] : string }): this {
-        Object.assign(this.headers, headers);
+        for(let key in headers) {
+            this.addHeader(key, headers[key]);
+        }
         return this;
     }
 
@@ -64,6 +67,62 @@ export class Response implements ProxyResult {
             delete this.headers[key];
         }
         return this;
+    }
+
+    /**
+     * Set a cookie on this response. Because of a quirk in the way API Gateway Proxy Integration and Lambda work, only
+     * one cookie can be set per response. Calling addCookie multiple time on the same response object will override
+     * the previously set cookie.
+     * @param {string} key     Key-name for the cookie.
+     * @param {string} value   Value to assign to the cookie.
+     * @param {CookieOptions} options Optional parameter that can be use to define additional option for the cookie.
+     */
+    public addCookie(key: string, value: string, options: CookieOptions = {}): this {
+        const defaults = {
+            secure: true,
+            httpOnly: true,
+            path: '/',
+        }
+        if (typeof options == 'object') {
+            options = Object.assign({}, defaults, options);
+        } else {
+            options = defaults;
+        }
+
+        let cookie = `${key}=${value}`;
+
+        if (options.domain) {
+            cookie += '; domain=' + options.domain;
+        }
+
+        if (options.path) {
+            cookie += '; path=' + options.path;
+        }
+
+        // If the `expires` attribute is unset and the `maxAge` attribute is.
+        if (!options.expires && options.maxAge) {
+            // Build a Date Object a specified number of second in the future.
+            options.expires = new Date(new Date().getTime() + options.maxAge * 1000); // JS operate in Milli-seconds
+        }
+
+        // if Expires at is a Date object, convert it to a string.
+        if (typeof options.expires == "object" && typeof options.expires.toUTCString == 'function') {
+            options.expires = options.expires.toUTCString();
+        }
+
+        if (options.expires) {
+            cookie = cookie + '; expires=' + options.expires.toString();
+        }
+
+        if (options.secure) {
+            cookie = cookie + '; Secure';
+        }
+
+        if (options.httpOnly) {
+            cookie = cookie + '; HttpOnly';
+        }
+
+        return this.addHeader('set-cookie', cookie);
     }
 
     /**
