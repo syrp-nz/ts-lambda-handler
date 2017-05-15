@@ -2,6 +2,7 @@ import {APIGatewayEvent} from 'aws-lambda';
 import { BadRequestError, ValidationError } from './Errors';
 import Url = require('url');
 import * as JOI from 'joi';
+import { HttpVerb } from './Types'
 
 export class Request {
 
@@ -50,8 +51,8 @@ export class Request {
     /**
      * Retrieve the method for this request.
      */
-    public getMethod(): string {
-        return this.event.httpMethod.toUpperCase();
+    public getMethod(): HttpVerb {
+        return <HttpVerb>this.event.httpMethod.toUpperCase();
     }
 
     /**

@@ -3,6 +3,7 @@ import * as Config from './Config';
 import * as Errors from './Errors';
 import * as Handlers from './Handlers';
 import * as Utilities from './Utilities';
+import * as Types from './Types';
 
 
 export { CookieOptions } from './CookieOptions';
@@ -14,5 +15,6 @@ export {
     Config,
     Errors,
     Handlers,
-    Utilities
+    Utilities,
+    Types
 }
