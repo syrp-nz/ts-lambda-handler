@@ -3,18 +3,20 @@ import { AbstractHandler } from './AbstractHandler';
 import { ProxyHandlerConfig } from '../Config/ProxyHandlerConfig';
 import { Request } from '../Request';
 import { Response } from '../Response';
-import { ValidationError, NotFoundError, MethodNotAllowedError } from '../Errors';
+import { ValidationError, NotFoundError, MethodNotAllowedError, BadGatewayError } from '../Errors';
 import * as JOI from 'joi';
-import * as Https from 'https';
-import * as Http from 'http';
-import { HttpVerb } from '../HttpVerb'
+
+import * as NodeRequest from 'request';
+import { Map, HttpVerb, ProxyResponse } from '../Types';
+import * as http from 'http';
+
 
 const DEFAULT_CONFIG: ProxyHandlerConfig = {
-    remotePath: '/',
+    baseUrl: '/',
     pathParameterName: 'path',
     ssl: true,
     processOptionsLocally: true,
-    whiteListedHeader: new Array<string>()
+    whiteListedHeader: new Array<string>(),
 }
 
 /**
@@ -37,14 +39,38 @@ export class ProxyHandler extends AbstractHandler {
     ) {
         super(config);
         this.config = Object.assign(DEFAULT_CONFIG, config);
-        if (!this.config.remotePort) {
-            this.config.remotePort = this.config.ssl ? 443 : 80;
+        if (!this.config.port) {
+            this.config.port = this.config.ssl ? 443 : 80;
         }
 
     }
 
     public process(request:Request, response:Response): Promise<void> {
+        return this.buildProxyOptions()
+            .then(options => this.proxyRequest(options))
+            .then(proxyResponse => {
 
+            });
+
+    }
+
+
+    /**
+     * Perform an HTTP/HTTPS request.
+     * @param  {NodeRequest.Options}    options [description]
+     * @return {Promise<ProxyResponse>}         [description]
+     */
+    protected proxyRequest(options:NodeRequest.Options): Promise<ProxyResponse> {
+        return new Promise<ProxyResponse>((resolve, reject) => {
+            NodeRequest(options, (error: any, incomingMessage: http.IncomingMessage, response: string|Buffer) => {
+                if (error) {
+                    console.error(error);
+                    reject(new BadGatewayError());
+                } else {
+                    resolve({message: incomingMessage, body: response});
+                }
+            })
+        })
     }
 
     /**
@@ -58,14 +84,20 @@ export class ProxyHandler extends AbstractHandler {
      *
      * @return {Promise<Https.RequestOptions>} [description]
      */
-    protected buildProxyOptions(): Promise<Https.RequestOptions> {
-        let options: Https.RequestOptions = {
+    protected buildProxyOptions(): Promise<NodeRequest.Options> {
+        let options: NodeRequest.Options = {
             host: this.getRemoteHost(),
             port: this.getRemotePort(),
-            path: this.getRequestRemotePath(),
-            method: this.request.getMethod,
-            headers: {}
+            baseUrl: this.getRemoteBaseUrl(),
+            url: this.getRemotePath(),
+            method: this.getMethod(),
+            headers: this.getRemoteHeaders(),
+            qs: this.getQueryStringParameters(),
         };
+
+        if (this.config.ssl) {
+            options.strictSSL = true;
+        }
 
         return Promise.resolve(options);
     }
@@ -75,7 +107,7 @@ export class ProxyHandler extends AbstractHandler {
      * in the constructor. Can be overriden to adjust the remote host on the fly.
      */
     protected getRemoteHost(): string {
-        return this.remoteHost;
+        return `http${this.config.ssl ? 's' : ''}://${this.remoteHost}`;
     }
 
     /**
@@ -83,21 +115,56 @@ export class ProxyHandler extends AbstractHandler {
      * in the constructor. Can be overriden to adjust the remote host on the fly.
      */
     protected getRemotePort(): number {
-        return this.config.remotePort;
+        return this.config.port;
     }
 
     /**
      * Build the Path of the remote request. This method can be overriden to alter where the request are directed.
      */
-    protected getRequestRemotePath(): string {
-        return (this.config.remotePath.match(/^\//) ? '' : '/') +   // Add slash if remote path doesn't start with one
-            this.config.remotePath +
-            (this.config.remotePath.match(/\/$/) ? '' : '/') +      // Add slash if remote path doesn't end with one
-            this.request.data.pathParameters[this.config.pathParameterName];
+    protected getRemoteBaseUrl(): string {
+        return (this.config.baseUrl.match(/^\//) ? '' : '/') +   // Add slash if remote path doesn't start with one
+            this.config.baseUrl +
+            (this.config.baseUrl.match(/\/$/) ? '' : '/');       // Add slash if remote path doesn't end with one
+
     }
 
+    /**
+     * [getRemotePath description]
+     * @return {string} [description]
+     */
+    protected getRemotePath(): string {
+        return this.request.getPathParameter[this.config.pathParameterName];
+    }
+
+    /**
+     * Get the HTTP method to use to communicate with the proxy.
+     * @return {HttpVerb} [description]
+     */
     protected getMethod(): HttpVerb {
         return this.request.getMethod();
+    }
+
+    /**
+     * Build a list of headers that should be attached to the proxy request. The default behavior is to return all white
+     * listed headers from the original request.
+     *
+     * This method can also be overriden to provide a custom list of headers.
+     */
+    protected getRemoteHeaders(): Map<string> {
+        const headers: Map<string> = {};
+
+        this.config.whiteListedHeader.forEach((header) => {
+            headers[header.toLowerCase()] = this.request.getHeader(header);
+        });
+
+        return headers;
+    }
+
+    /**
+     * Return the query string parameter that will be added to the proxy request.
+     */
+    protected getQueryStringParameters(): Map<string> {
+        return this.request.data.queryStringParameters;
     }
 
 }
