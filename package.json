@@ -15,12 +15,13 @@
   "dependencies": {
     "dynamodb-doc": "^1.0.0",
     "extend": "^3.0.0",
-    "fs-promise": "^2.0.0",
+    "fs-extra": "^3.0.1",
     "joi": "^10.2.0",
     "jsonwebtoken": "^7.2.1",
     "mustache": "^2.3.0",
+    "qs": "^6.4.0",
     "randomstring": "^1.1.5",
-    "request": "^2.79.0",
+    "request": "^2.81.0",
     "request-promise": "^4.1.1",
     "rxjs": "^5.1.1",
     "uniqid": "^4.1.1"
@@ -35,8 +36,12 @@
     "@types/joi": "^10.0.0",
     "@types/jsonwebtoken": "^7.2.0",
     "@types/node": "^7.0.5",
+    "@types/qs": "^6.2.31",
+    "@types/request": "0.0.43",
     "aws-lambda-mock-context": "^3.0.1",
     "aws-sdk-mock": "^1.6.1",
-    "chai": "^3.5.0"
+    "chai": "^3.5.0",
+    "ts-node": "^3.0.4",
+    "typescript": "^2.3.2"
   }
 }

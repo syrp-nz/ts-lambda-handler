@@ -32,7 +32,7 @@ describe('AmazonResourceName', () => {
         assert.equal(arn.partition, 'aws');
         assert.equal(arn.service, 'elasticbeanstalk');
         assert.equal(arn.region, 'us-east-1');
-        assert.equal(arn.accountId, 123456789012);
+        assert.equal(arn.accountId, '123456789012');
         assert.equal(arn.resourceType, 'environment');
         assert.equal(arn.resource, 'My App/MyEnvironment');
 
@@ -40,7 +40,7 @@ describe('AmazonResourceName', () => {
         assert.equal(arn.partition, 'aws');
         assert.equal(arn.service, 'codecommit');
         assert.equal(arn.region, 'us-east-1');
-        assert.equal(arn.accountId, 123456789012);
+        assert.equal(arn.accountId, '123456789012');
         assert.equal(arn.resourceType, '');
         assert.equal(arn.resource, 'MyDemoRepo');
 

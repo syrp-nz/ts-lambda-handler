@@ -1,4 +1,4 @@
-import * as fs from 'fs-promise';
+import * as fs from 'fs-extra';
 import { Buffer } from 'buffer';
 import * as Mustache from 'mustache';
 
