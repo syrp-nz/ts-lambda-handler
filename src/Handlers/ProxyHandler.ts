@@ -16,7 +16,8 @@ const DEFAULT_CONFIG: ProxyHandlerConfig = {
     pathParameterName: 'path',
     ssl: true,
     processOptionsLocally: true,
-    whiteListedHeader: new Array<string>(),
+    whiteListedHeaders: new Array<string>(),
+    whiteListedResponseHeaders: new Array<string>(),
 }
 
 /**
@@ -153,8 +154,11 @@ export class ProxyHandler extends AbstractHandler {
     protected getRemoteHeaders(): Map<string> {
         const headers: Map<string> = {};
 
-        this.config.whiteListedHeader.forEach((header) => {
-            headers[header.toLowerCase()] = this.request.getHeader(header);
+        this.config.whiteListedHeaders.forEach((header) => {
+            const headerValue = this.request.getHeader(header);
+            if (headerValue != '') {
+                headers[header.toLowerCase()] = headerValue;
+            }
         });
 
         return headers;
@@ -165,6 +169,27 @@ export class ProxyHandler extends AbstractHandler {
      */
     protected getQueryStringParameters(): Map<string> {
         return this.request.data.queryStringParameters;
+    }
+
+    /**
+     * Process a proxy response and update the Handler's response to match. This method can be overriden if the
+     * Handler's response need to be modified in some way before being sent back to the client.
+     * @param  {http.IncomingMessage} incomingMessage
+     * @param  {string|Buffer}        response
+     * @return {Promise<void>}
+     */
+    protected processResponse(incomingMessage: http.IncomingMessage, response: string|Buffer): Promise<void> {
+        this.response.setStatusCode(incomingMessage.statusCode);
+        this.config.whiteListedResponseHeaders.forEach((header) => {
+            const headerValue = this.request.getHeader(header);
+            if (headerValue != '') {
+                this.response.addHeader(header.toLowerCase(), headerValue);
+            }
+        });
+
+        this.response.setBody(response.toString());
+
+        return Promise.resolve();
     }
 
 }

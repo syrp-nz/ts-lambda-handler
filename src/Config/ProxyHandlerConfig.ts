@@ -39,6 +39,11 @@ export interface ProxyHandlerConfig extends HandlerConfig {
     /**
      * List of headers that should be copied over from the original request to the proxy request.
      */
-    whiteListedHeader?: string[];
+    whiteListedHeaders?: string[];
 
+    /**
+     * List of headers that should be copied over from the proxy response to the lambda response.
+     */
+    whiteListedResponseHeaders?: string[]
+    
 }
