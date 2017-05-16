@@ -5,7 +5,7 @@ import { Response } from '../Response';
 import { DynamoDB } from 'aws-sdk';
 import { ValidationError, NotFoundError, MethodNotAllowedError } from '../Errors';
 import * as JOI from 'joi';
-import { Map } from '../Map';
+import { Map } from '../Types';
 import * as uniqid from 'uniqid';
 import * as extend from 'extend';
 

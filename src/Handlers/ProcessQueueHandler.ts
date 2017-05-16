@@ -7,7 +7,7 @@ import { Response } from '../Response';
 import { AmazonResourceName, SQSQueueARN } from '../Utilities';
 import { isInTestingMode} from '../Utilities/Functions';
 import { ProcessQueueHandlerConfig } from '../Config';
-import { Map } from '../Map';
+import { Map } from '../Types';
 import { validateLambdaInvokeResponse } from '../Utilities/Functions';
 
 export const LAMBDA_FN_ATTR = 'lambdaFn';
