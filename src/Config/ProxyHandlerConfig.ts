@@ -8,7 +8,7 @@ export interface ProxyHandlerConfig extends HandlerConfig {
     /**
      * Remote root path where the request will be redirected. Defaults to '/'. e.g.
      */
-    remotePath?: string;
+    baseUrl?: string;
 
     /**
      * Name of the Path Parameter on the AWS request that contains the path of the request. This will default to `path`
@@ -24,7 +24,7 @@ export interface ProxyHandlerConfig extends HandlerConfig {
     /**
      * Remote Port where the request should be directed. Defaults to 443 for HTTPS request and 80 for HTTP request.
      */
-    remotePort?: number;
+    port?: number;
 
     /**
      * whatever OPTIONS request should be process locally. If set to `true`, pre-flight OPTIONS request will be handle
@@ -40,6 +40,5 @@ export interface ProxyHandlerConfig extends HandlerConfig {
      * List of headers that should be copied over from the original request to the proxy request.
      */
     whiteListedHeader?: string[];
-
 
 }
