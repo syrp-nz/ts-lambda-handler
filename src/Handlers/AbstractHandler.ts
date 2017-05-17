@@ -75,7 +75,8 @@ export abstract class AbstractHandler {
     }
 
     /**
-     * Determine if the current user can perform the current request. Return a promise that will return true if there's a valid authorizer assigned to this handler or false if there's no authorizer define for this handler.
+     * Determine if the current user can perform the current request. Return a promise that will return true if there's
+     * a valid authorizer assigned to this handler or false if there's no authorizer define for this handler.
      *
      * Invalid credentials will be handle via Promise rejection.
      * @return {Promise<boolean>} [description]
