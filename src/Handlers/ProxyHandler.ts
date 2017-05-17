@@ -47,12 +47,19 @@ export class ProxyHandler extends AbstractHandler {
     }
 
     public process(request:Request, response:Response): Promise<void> {
+        // If this is an option request and our config instruct us not to relay option request.
+        if (this.config.processOptionsLocally && this.getMethod() == 'OPTIONS') {
+            // Send an empty reponse.
+            this.response.send();
+            return Promise.resolve();
+        }
+
         return this.buildProxyOptions()
             .then(options => this.proxyRequest(options))
-            .then(proxyResponse => {
-
+            .then(proxyResponse => this.processResponse(proxyResponse.message, proxyResponse.body))
+            .then(() => {
+                this.response.send();
             });
-
     }
 
 
@@ -87,13 +94,12 @@ export class ProxyHandler extends AbstractHandler {
      */
     protected buildProxyOptions(): Promise<NodeRequest.Options> {
         let options: NodeRequest.Options = {
-            host: this.getRemoteHost(),
             port: this.getRemotePort(),
-            baseUrl: this.getRemoteBaseUrl(),
-            url: this.getRemotePath(),
+            url: this.getRemoteHost() + this.getRemoteBaseUrl() + this.getRemotePath(),
             method: this.getMethod(),
             headers: this.getRemoteHeaders(),
             qs: this.getQueryStringParameters(),
+            body: this.getRemoteBody()
         };
 
         if (this.config.ssl) {
@@ -134,7 +140,7 @@ export class ProxyHandler extends AbstractHandler {
      * @return {string} [description]
      */
     protected getRemotePath(): string {
-        return this.request.getPathParameter[this.config.pathParameterName];
+        return this.request.getPathParameter(this.config.pathParameterName);
     }
 
     /**
@@ -172,13 +178,21 @@ export class ProxyHandler extends AbstractHandler {
     }
 
     /**
+     * Get the body of the proxy request as a string. Default behavior is to return the body of the original request.
+     * @return {string}
+     */
+    protected getRemoteBody(): string {
+        return this.request.data.body;
+    }
+
+    /**
      * Process a proxy response and update the Handler's response to match. This method can be overriden if the
      * Handler's response need to be modified in some way before being sent back to the client.
      * @param  {http.IncomingMessage} incomingMessage
      * @param  {string|Buffer}        response
      * @return {Promise<void>}
      */
-    protected processResponse(incomingMessage: http.IncomingMessage, response: string|Buffer): Promise<void> {
+    protected processResponse(incomingMessage: http.IncomingMessage, body: string|Buffer): Promise<void> {
         this.response.setStatusCode(incomingMessage.statusCode);
         this.config.whiteListedResponseHeaders.forEach((header) => {
             const headerValue = this.request.getHeader(header);
@@ -187,7 +201,7 @@ export class ProxyHandler extends AbstractHandler {
             }
         });
 
-        this.response.setBody(response.toString());
+        this.response.setBody(body.toString());
 
         return Promise.resolve();
     }
