@@ -39,11 +39,7 @@ export class ProxyHandler extends AbstractHandler {
         protected config:ProxyHandlerConfig = {}
     ) {
         super(config);
-        this.config = Object.assign(DEFAULT_CONFIG, config);
-        if (!this.config.port) {
-            this.config.port = this.config.ssl ? 443 : 80;
-        }
-
+        this.config = Object.assign({}, DEFAULT_CONFIG, config);
     }
 
     public process(request:Request, response:Response): Promise<void> {
@@ -90,6 +86,8 @@ export class ProxyHandler extends AbstractHandler {
      * * the method is read from original AWS request,
      * * the header fi
      *
+
+
      * @return {Promise<Https.RequestOptions>} [description]
      */
     protected buildProxyOptions(): Promise<NodeRequest.Options> {
@@ -122,7 +120,12 @@ export class ProxyHandler extends AbstractHandler {
      * in the constructor. Can be overriden to adjust the remote host on the fly.
      */
     protected getRemotePort(): number {
-        return this.config.port;
+        if (this.config.port) {
+            return this.config.port;
+        } else {
+            // If the port is not explicitly define use the protocol to pick which port to use.
+            return this.config.ssl ? 443 : 80;
+        }
     }
 
     /**
@@ -194,10 +197,23 @@ export class ProxyHandler extends AbstractHandler {
      */
     protected processResponse(incomingMessage: http.IncomingMessage, body: string|Buffer): Promise<void> {
         this.response.setStatusCode(incomingMessage.statusCode);
-        this.config.whiteListedResponseHeaders.forEach((header) => {
-            const headerValue = this.request.getHeader(header);
-            if (headerValue != '') {
-                this.response.addHeader(header.toLowerCase(), headerValue);
+
+        // Lowercase all the header keys.
+        const headers = incomingMessage.headers;
+        for (let key in headers) {
+            const lowerCaseKey = key.toLowerCase();
+            if (key != lowerCaseKey) {
+                headers[lowerCaseKey] = headers[key];
+                delete headers[key];
+            }
+
+        }
+
+        // Find headers we can returned to the user.
+        this.config.whiteListedResponseHeaders.forEach((key) => {
+            const lowerCaseKey = key.toLowerCase()
+            if (headers[lowerCaseKey] != undefined) {
+                this.response.addHeader(key, headers[lowerCaseKey]);
             }
         });
 
