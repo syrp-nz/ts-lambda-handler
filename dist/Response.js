@@ -7,8 +7,8 @@ var Response = (function () {
         this.callback = callback;
         this.statusCode = 200;
         this.headers = {};
-        this.body = null;
-        this._sent = false;
+        this.body = "";
+        this._sent = undefined;
     }
     Object.defineProperty(Response.prototype, "sent", {
         /**
@@ -37,7 +37,7 @@ var Response = (function () {
      * @return {this}
      */
     Response.prototype.addHeader = function (key, value) {
-        this.headers[key] = value;
+        this.headers[key.toLowerCase()] = value;
         return this;
     };
     /**
@@ -46,7 +46,9 @@ var Response = (function () {
      * @return {this}
      */
     Response.prototype.addHeaders = function (headers) {
-        Object.assign(this.headers, headers);
+        for (var key in headers) {
+            this.addHeader(key, headers[key]);
+        }
         return this;
     };
     /**
@@ -59,6 +61,54 @@ var Response = (function () {
             delete this.headers[key];
         }
         return this;
+    };
+    /**
+     * Set a cookie on this response. Because of a quirk in the way API Gateway Proxy Integration and Lambda work, only
+     * one cookie can be set per response. Calling addCookie multiple time on the same response object will override
+     * the previously set cookie.
+     * @param {string} key     Key-name for the cookie.
+     * @param {string} value   Value to assign to the cookie.
+     * @param {CookieOptions} options Optional parameter that can be use to define additional option for the cookie.
+     */
+    Response.prototype.addCookie = function (key, value, options) {
+        if (options === void 0) { options = {}; }
+        var defaults = {
+            secure: true,
+            httpOnly: true,
+            path: '/',
+        };
+        if (typeof options == 'object') {
+            options = Object.assign({}, defaults, options);
+        }
+        else {
+            options = defaults;
+        }
+        var cookie = key + "=" + value;
+        if (options.domain) {
+            cookie += '; domain=' + options.domain;
+        }
+        if (options.path) {
+            cookie += '; path=' + options.path;
+        }
+        // If the `expires` attribute is unset and the `maxAge` attribute is.
+        if (!options.expires && options.maxAge) {
+            // Build a Date Object a specified number of second in the future.
+            options.expires = new Date(new Date().getTime() + options.maxAge * 1000); // JS operate in Milli-seconds
+        }
+        // if Expires at is a Date object, convert it to a string.
+        if (typeof options.expires == "object" && typeof options.expires.toUTCString == 'function') {
+            options.expires = options.expires.toUTCString();
+        }
+        if (options.expires) {
+            cookie = cookie + '; expires=' + options.expires.toString();
+        }
+        if (options.secure) {
+            cookie = cookie + '; Secure';
+        }
+        if (options.httpOnly) {
+            cookie = cookie + '; HttpOnly';
+        }
+        return this.addHeader('set-cookie', cookie);
     };
     /**
      * Receives something and try to convert it to a string for hte body.
@@ -106,7 +156,7 @@ var Response = (function () {
      * @param {string} url [description]
      */
     Response.prototype.redirect = function (url) {
-        this.addHeader('location', url).setStatusCode(302).setBody(null).send();
+        this.addHeader('location', url).setStatusCode(302).setBody("").send();
     };
     /**
      * Send a failed response to the client. This method can be used to send both expected and unexpected errors.

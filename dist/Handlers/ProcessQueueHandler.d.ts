@@ -5,7 +5,7 @@ import { Request } from '../Request';
 import { Response } from '../Response';
 import { AmazonResourceName, SQSQueueARN } from '../Utilities';
 import { ProcessQueueHandlerConfig } from '../Config';
-import { Map } from '../Map';
+import { Map } from '../Types';
 export declare const LAMBDA_FN_ATTR = "lambdaFn";
 /**
  * Read messages from an SQS Queue and attempt to process them with Lambda functions.

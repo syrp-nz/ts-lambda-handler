@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var fs = require("fs-promise");
+var fs = require("fs-extra");
 var buffer_1 = require("buffer");
 var Mustache = require("mustache");
 /**

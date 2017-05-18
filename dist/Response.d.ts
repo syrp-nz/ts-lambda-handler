@@ -1,4 +1,5 @@
 import { ProxyCallback, ProxyResult } from 'aws-lambda';
+import { CookieOptions } from './CookieOptions';
 export declare class Response implements ProxyResult {
     protected callback: ProxyCallback;
     constructor(callback: ProxyCallback);
@@ -40,6 +41,15 @@ export declare class Response implements ProxyResult {
      * @return {this}
      */
     removeHeader(key: string): this;
+    /**
+     * Set a cookie on this response. Because of a quirk in the way API Gateway Proxy Integration and Lambda work, only
+     * one cookie can be set per response. Calling addCookie multiple time on the same response object will override
+     * the previously set cookie.
+     * @param {string} key     Key-name for the cookie.
+     * @param {string} value   Value to assign to the cookie.
+     * @param {CookieOptions} options Optional parameter that can be use to define additional option for the cookie.
+     */
+    addCookie(key: string, value: string, options?: CookieOptions): this;
     /**
      * Receives something and try to convert it to a string for hte body.
      * @param  {any}  body [description]

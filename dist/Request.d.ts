@@ -1,5 +1,6 @@
 import { APIGatewayEvent } from 'aws-lambda';
 import * as JOI from 'joi';
+import { HttpVerb } from './Types';
 export declare class Request {
     protected event: APIGatewayEvent;
     constructor(event: APIGatewayEvent);
@@ -21,7 +22,7 @@ export declare class Request {
     /**
      * Retrieve the method for this request.
      */
-    getMethod(): string;
+    getMethod(): HttpVerb;
     /**
      * Retrieve a query string parameter if it exists.
      * @param  {string}    key  Case Insensitive header key

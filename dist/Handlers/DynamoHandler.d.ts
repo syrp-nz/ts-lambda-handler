@@ -4,7 +4,7 @@ import { Request } from '../Request';
 import { Response } from '../Response';
 import { DynamoDB } from 'aws-sdk';
 import * as JOI from 'joi';
-import { Map } from '../Map';
+import { Map } from '../Types';
 /**
  * An Handler to implement a REST endpoint for a Dynamo table.
  */
