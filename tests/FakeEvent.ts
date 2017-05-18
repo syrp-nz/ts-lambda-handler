@@ -1,7 +1,25 @@
-import { APIGatewayEvent } from 'aws-lambda';
+// import { APIGatewayEvent } from 'aws-lambda';
+import * as lambda from 'aws-lambda';
 import * as Lib from '../src/index';
 
-export const fakeEvent: APIGatewayEvent = {
+export const fakeContext: lambda.Context = {
+    // Properties
+    callbackWaitsForEmptyEventLoop: true,
+    functionName: 'FakeFunctionName',
+    functionVersion: '$LATEST',
+    invokedFunctionArn: 'arn:aws:lambda:us-west-2:493938364882:function:FakeFunctionName',
+    memoryLimitInMB: 128,
+    awsRequestId: 'f5578ab0-3aa1-11e7-be18-03a72d6f0e5d',
+    logGroupName: '/aws/lambda/FakeFunctionName',
+    logStreamName: '2017/05/17/[$LATEST]c9bcbefb6f1d4d7a92a841402e5f8c73',
+    // Functions
+    getRemainingTimeInMillis: () => 20000,
+    done: (error?: Error, result?: any) => {},
+    fail: (...args) => {},
+    succeed: (message: any) => {},
+}
+
+export const fakeEvent: lambda.APIGatewayEvent = {
     "resource":"/test/endpoint",
     "path":"/test/endpoint",
     "httpMethod":"POST",
@@ -40,7 +58,11 @@ export const fakeEvent: APIGatewayEvent = {
         "HeLLo": "world",
         "FOO": "BAR",
     },
-    "pathParameters":null,
+    "pathParameters": {
+        'path': 'fake/path',
+        'id': '123456789',
+        'folder': 'fake-folder',
+    },
     "stageVariables": {
         "key1": "value",
         "HeLLo": "world",
@@ -72,3 +94,12 @@ export const fakeEvent: APIGatewayEvent = {
     "body":"{\"id\":4870274641,\"email\":\"maxime@rainville.me\",\"closed_at\":null,\"created_at\":\"2017-02-27T14:50:35-11:00\",\"updated_at\":\"2017-02-27T14:50:35-11:00\",\"number\":19,\"note\":null,\"token\":\"b3e7b572a8fecb8965a4b1424b3e52ba\",\"gateway\":\"paypal-invoice\",\"test\":false,\"total_price\":\"286.35\",\"subtotal_price\":\"249.00\",\"total_weight\":272,\"total_tax\":\"37.35\",\"taxes_included\":false,\"currency\":\"USD\",\"financial_status\":\"paid\",\"confirmed\":true,\"total_discounts\":\"0.00\",\"total_line_items_price\":\"249.00\",\"cart_token\":null,\"buyer_accepts_marketing\":false,\"name\":\"#3-1004\",\"referring_site\":null,\"landing_site\":null,\"cancelled_at\":null,\"cancel_reason\":null,\"total_price_usd\":\"286.35\",\"checkout_token\":null,\"reference\":null,\"user_id\":105843784,\"location_id\":10590225,\"source_identifier\":\"10590225-3-1004\",\"source_url\":null,\"processed_at\":\"2017-02-27T14:50:33-11:00\",\"device_id\":3,\"browser_ip\":null,\"landing_site_ref\":null,\"order_number\":1019,\"discount_codes\":[],\"note_attributes\":[],\"payment_gateway_names\":[\"paypal-invoice\"],\"processing_method\":\"\",\"checkout_id\":null,\"source_name\":\"pos\",\"fulfillment_status\":null,\"tax_lines\":[{\"title\":\"GST\",\"price\":\"37.35\",\"rate\":0.15}],\"tags\":\"\",\"contact_email\":\"maxime@rainville.me\",\"order_status_url\":null,\"line_items\":[{\"id\":9411142609,\"variant_id\":26940988104,\"title\":\"Genie Mini\",\"quantity\":1,\"price\":\"249.00\",\"grams\":272,\"sku\":\"0032-0001\",\"variant_title\":\"Genie Mini\",\"vendor\":\"Syrp\",\"fulfillment_service\":\"manual\",\"product_id\":8141076040,\"requires_shipping\":true,\"taxable\":true,\"gift_card\":false,\"pre_tax_price\":\"249.00\",\"name\":\"Genie Mini - Genie Mini\",\"variant_inventory_management\":null,\"properties\":[],\"product_exists\":true,\"fulfillable_quantity\":1,\"total_discount\":\"0.00\",\"fulfillment_status\":null,\"tax_lines\":[{\"title\":\"GST\",\"price\":\"37.35\",\"rate\":0.15}]}],\"shipping_lines\":[],\"billing_address\":{\"first_name\":\"Maxime\",\"address1\":\"7 Linewood Aevnue\",\"phone\":null,\"city\":\"Auckland\",\"zip\":\"1025\",\"province\":\"Auckland\",\"country\":\"New Zealand\",\"last_name\":\"Rainville\",\"address2\":\"Mount Albert\",\"company\":\"\",\"latitude\":-36.8758217,\"longitude\":174.7215847,\"name\":\"Maxime Rainville\",\"country_code\":\"NZ\",\"province_code\":\"AUK\"},\"fulfillments\":[],\"refunds\":[],\"customer\":{\"id\":4979143569,\"email\":\"maxime@rainville.me\",\"accepts_marketing\":false,\"created_at\":\"2017-01-17T14:55:05-11:00\",\"updated_at\":\"2017-02-27T14:50:35-11:00\",\"first_name\":\"Maxime\",\"last_name\":\"Rainville\",\"orders_count\":11,\"state\":\"disabled\",\"total_spent\":\"2839.21\",\"last_order_id\":4870274641,\"note\":null,\"verified_email\":true,\"multipass_identifier\":null,\"tax_exempt\":false,\"phone\":null,\"tags\":\"\",\"last_order_name\":\"#3-1004\",\"default_address\":{\"id\":5250456593,\"first_name\":\"Maxime\",\"last_name\":\"Rainville\",\"company\":\"\",\"address1\":\"7 Linewood Aevnue\",\"address2\":\"Mount Albert\",\"city\":\"Auckland\",\"province\":\"Auckland\",\"country\":\"New Zealand\",\"zip\":\"1025\",\"phone\":null,\"name\":\"Maxime Rainville\",\"province_code\":\"AUK\",\"country_code\":\"NZ\",\"country_name\":\"New Zealand\",\"default\":true}}}",
     "isBase64Encoded":false
 };
+
+export let fakeError: Error;
+
+export let fakeResponse: lambda.ProxyResult;
+
+export const fakeHandlerCallback: lambda.ProxyCallback = (error: Error, response: lambda.ProxyResult) => {
+    fakeError = error;
+    fakeResponse = response;
+}

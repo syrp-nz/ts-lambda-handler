@@ -1,9 +1,11 @@
 import {} from 'jasmine';
 import * as chai from 'chai';
 import * as Lib from '../src/index';
-import { fakeEvent } from './FakeEvent';
+import { fakeEvent as fakeEventSource } from './FakeEvent';
 import * as JOI from 'joi';
-import 'mocha';
+import * as lambda from 'aws-lambda';
+
+let fakeEvent: lambda.APIGatewayEvent = JSON.parse(JSON.stringify(fakeEventSource));
 
 const assert = chai.assert;
 

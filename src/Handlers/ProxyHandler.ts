@@ -163,7 +163,7 @@ export class ProxyHandler extends AbstractHandler {
         this.config.whiteListedHeaders.forEach((header) => {
             const headerValue = this.request.getHeader(header);
             if (headerValue != '') {
-                headers[header.toLowerCase()] = headerValue;
+                headers[header] = headerValue;
             }
         });
 
