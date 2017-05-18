@@ -44,7 +44,7 @@ describe('Response', () => {
 
     it('redirect', () => {
         proxyResult = null;
-        assert.isFalse(response.sent);
+        assert.isNotOk(response.sent);
         response.redirect('https://example.com/abc.html');
         assert.isTrue(response.sent);
 
@@ -59,7 +59,7 @@ describe('Response', () => {
     it('sent', () => {
         response = new Lib.Response(callback);
         // Response should be unsent to begin with.
-        assert.isFalse(response.sent);
+        assert.isNotOk(response.sent);
 
         response.send();
         assert.isTrue(response.sent);

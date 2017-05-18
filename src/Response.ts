@@ -12,7 +12,7 @@ export class Response implements ProxyResult {
 
     public statusCode:number = 200;
     public headers:{ [key: string] : string } = {};
-    public body:string = "";
+    public body:string = null;
 
     protected _sent: boolean = undefined;
 
