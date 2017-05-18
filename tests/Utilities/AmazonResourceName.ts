@@ -1,6 +1,7 @@
 import {} from 'jasmine';
 import * as chai from 'chai';
-import * as Lib from '../../';
+import 'mocha';
+import * as Lib from '../../src/index';
 
 let assert = chai.assert;
 

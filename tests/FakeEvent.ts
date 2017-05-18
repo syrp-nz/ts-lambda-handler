@@ -1,5 +1,5 @@
 import { APIGatewayEvent } from 'aws-lambda';
-import * as Lib from '../index';
+import * as Lib from '../src/index';
 
 export const fakeEvent: APIGatewayEvent = {
     "resource":"/test/endpoint",

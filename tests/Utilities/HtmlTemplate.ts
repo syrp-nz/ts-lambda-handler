@@ -1,8 +1,12 @@
 import {} from 'jasmine';
 import * as chai from 'chai';
-import * as Lib from '../../index';
+import * as chaiAsPromised from 'chai-as-promised';
+import * as Lib from '../../src/index';
 import * as Lambda from 'aws-lambda';
 import { Buffer } from 'buffer';
+
+
+chai.use(chaiAsPromised);
 
 const assert = chai.assert;
 const simpleStr = 'hello world!';
@@ -14,8 +18,14 @@ const includePartial = 'Partial content is {{> ' + partialKey + '}}';
 describe('Utilities.HtmlTemplate', () => {
     let template: Lib.Utilities.HtmlTemplate;
 
+    it('test chai promise', () => {
+        return assert.eventually.equal(Promise.resolve(2 + 2), 4, 'This had better be true, eventually');
+    });
+
     it('setTemplateString', () => {
         template = new Lib.Utilities.HtmlTemplate();
+
+
         return template
             .setTemplateString(simpleStr)
             .render()
@@ -34,7 +44,7 @@ describe('Utilities.HtmlTemplate', () => {
     it('setTemplate', () => {
         template = new Lib.Utilities.HtmlTemplate();
         return template
-            .setTemplate('src/test/assets/simpleTemplate.html')
+            .setTemplate('tests/assets/simpleTemplate.html')
             .render({name: 'bob'})
             .then((str) => {
                 assert.equal(str, "Hello bob.\n" )
@@ -45,7 +55,7 @@ describe('Utilities.HtmlTemplate', () => {
         template = new Lib.Utilities.HtmlTemplate();
         return template
             .setTemplateString(includePartial)
-            .setPartial(partialKey, 'src/test/assets/simpleTemplate.html')
+            .setPartial(partialKey, 'tests/assets/simpleTemplate.html')
             .render({name: 'bob'})
             .then((str) => {assert.equal(str, "Partial content is Hello bob.\n")});
     });

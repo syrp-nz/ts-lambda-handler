@@ -6,8 +6,7 @@
   "module": "dist/index.js",
   "typings": "dist/index.d.ts",
   "scripts": {
-    "test": "mocha --recursive dist/test/",
-    "pretest": "npm run compile",
+    "test": "mocha -r ts-node/register tests/*.ts tests/**/*.ts tests/**/**/*.ts tests/**/**/**/*.ts",
     "compile": "rm -rf dist; tsc"
   },
   "author": "Maxime Rainville <webmaster@syrp.co.nz> (https://syrp.co.nz)",
@@ -28,18 +27,20 @@
   "devDependencies": {
     "@djabry/aws-sdk-typescript": "0.0.11",
     "@types/aws-lambda": "^0.0.7",
-    "@types/chai": "^3.4.34",
+    "@types/chai": "^3.5.2",
+    "@types/chai-as-promised": "0.0.30",
     "@types/crypto-js": "^3.1.33",
     "@types/extend": "^2.0.30",
-    "@types/jasmine": "^2.5.43",
     "@types/joi": "^10.0.0",
     "@types/jsonwebtoken": "^7.2.0",
+    "@types/mocha": "^2.2.41",
     "@types/node": "^7.0.5",
     "@types/qs": "^6.2.31",
     "@types/request": "0.0.43",
     "aws-lambda-mock-context": "^3.0.1",
     "aws-sdk-mock": "^1.6.1",
     "chai": "^3.5.0",
+    "chai-as-promised": "^6.0.0",
     "ts-node": "^3.0.4",
     "typescript": "^2.3.2"
   }

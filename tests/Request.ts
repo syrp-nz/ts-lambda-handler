@@ -1,8 +1,9 @@
 import {} from 'jasmine';
 import * as chai from 'chai';
-import * as Lib from '../index';
+import * as Lib from '../src/index';
 import { fakeEvent } from './FakeEvent';
 import * as JOI from 'joi';
+import 'mocha';
 
 const assert = chai.assert;
 

@@ -1,8 +1,9 @@
 import {} from 'jasmine';
 import * as chai from 'chai';
-import * as Lib from '../index';
+import * as Lib from '../src/index';
 import * as Lambda from 'aws-lambda';
 import { Buffer } from 'buffer';
+import 'mocha';
 
 const assert = chai.assert;
 let error: Error;

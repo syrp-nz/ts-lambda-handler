@@ -1,6 +1,6 @@
 import {} from 'jasmine';
 import * as chai from 'chai';
-import * as Lib from '../../index';
+import * as Lib from '../../src/index';
 import * as Lambda from 'aws-lambda';
 import { fakeEvent } from '../FakeEvent';
 import * as MOCKAWS from 'aws-sdk-mock';
