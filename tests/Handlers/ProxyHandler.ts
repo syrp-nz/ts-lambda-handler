@@ -5,6 +5,8 @@ import * as chaiAsPromised from 'chai-as-promised';
 import { fakeContext, fakeEvent, fakeHandlerCallback } from '../FakeEvent';
 import * as Sinon from 'sinon';
 import { Buffer } from 'buffer';
+import * as HttpRequest from 'request';
+import * as http from 'http';
 
 chai.use(chaiAsPromised);
 const assert = chai.assert;
@@ -42,6 +44,10 @@ describe('ProxyHandler', () => {
     it('buildProxyOptions with explicit options', () => handler.buildProxyOptionsTestExplicit() );
 
     it('processResponse', () => handler.processResponseTest() );
+
+    it('proxyRequest success', () => handler.proxyRequestSuccessTest() );
+
+    it('proxyRequest failure', () => handler.proxyRequestFailureTest() );
 
 });
 
@@ -206,5 +212,67 @@ class StraightProxyHandler extends Lib.Handlers.ProxyHandler {
                 assert.equal(key.toLowerCase(), 'content-type');
             }
         });
+    }
+
+    proxyRequestSuccessTest() {
+        Sinon.stub(this, 'httpRequest').callsFake(this.mockHttpRequest);
+        return this.proxyRequest(this.mockProxyOption()).then((response: Lib.Types.ProxyResponse) => {
+            assert.isOk(response);
+            assert.isOk(response.body);
+            assert.isOk(response.message);
+            this.httpRequest['restore']();
+        });
+    }
+
+    proxyRequestFailureTest() {
+        Sinon.stub(this, 'httpRequest').callsFake(this.mockHttpRequestFailure);
+        return assert.isRejected(
+            this.proxyRequest(this.mockProxyOption()),
+            /BadGatewayError/,
+            "proxyRequest should return a rejected promise with a bad gateway error."
+        ).then(() => { this.httpRequest['restore']() });
+    }
+
+    mockProxyOption() {
+        return {
+            port: 443,
+            url: 'https://example.com/fake/path',
+            method: fakeEvent.httpMethod,
+            headers: {},
+            qs: this.request.data.queryStringParameters,
+            body: fakeEvent.body,
+            strictSSL: true
+        };
+    }
+
+
+    mockHttpRequest = (
+        options:HttpRequest.Options,
+        callback: {(error: any, incomingMessage: http.IncomingMessage, response: string|Buffer): void}
+    ) => {
+        const incomingMessage: any = {
+            statusCode: 418,
+            headers: {
+                'content-type': 'application/json',
+                'Cache-Control': 'max-age=60',
+            }
+        }
+
+        callback(null, incomingMessage, 'I\'m a tea pot.');
+    }
+
+    mockHttpRequestFailure = (
+        options:HttpRequest.Options,
+        callback: {(error: any, incomingMessage: http.IncomingMessage, response: string|Buffer): void}
+    ) => {
+        const incomingMessage: any = {
+            statusCode: 418,
+            headers: {
+                'content-type': 'application/json',
+                'Cache-Control': 'max-age=60',
+            }
+        }
+
+        callback(new Error('Server is on holiday'), null, null);
     }
 }

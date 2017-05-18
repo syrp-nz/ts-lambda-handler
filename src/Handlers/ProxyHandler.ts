@@ -6,9 +6,10 @@ import { Response } from '../Response';
 import { ValidationError, NotFoundError, MethodNotAllowedError, BadGatewayError } from '../Errors';
 import * as JOI from 'joi';
 
-import * as NodeRequest from 'request';
+import * as HttpRequest from 'request';
 import { Map, HttpVerb, ProxyResponse } from '../Types';
 import * as http from 'http';
+import { isInTestingMode} from '../Utilities/Functions';
 
 
 const DEFAULT_CONFIG: ProxyHandlerConfig = {
@@ -24,6 +25,12 @@ const DEFAULT_CONFIG: ProxyHandlerConfig = {
  * An handler to relay a request through a proxy.
  */
 export class ProxyHandler extends AbstractHandler {
+
+    /**
+     * Reference to the `request` module. We could call the module directly, but that make it more difficult to unit
+     * test.
+     */
+    protected httpRequest = HttpRequest;
 
     /**
      * Instanciate the Proxy Handler
@@ -64,11 +71,13 @@ export class ProxyHandler extends AbstractHandler {
      * @param  {NodeRequest.Options}    options [description]
      * @return {Promise<ProxyResponse>}         [description]
      */
-    protected proxyRequest(options:NodeRequest.Options): Promise<ProxyResponse> {
+    protected proxyRequest(options:HttpRequest.Options): Promise<ProxyResponse> {
         return new Promise<ProxyResponse>((resolve, reject) => {
-            NodeRequest(options, (error: any, incomingMessage: http.IncomingMessage, response: string|Buffer) => {
+            this.httpRequest(options, (error: any, incomingMessage: http.IncomingMessage, response: string|Buffer) => {
                 if (error) {
-                    console.error(error);
+                    // Don't log the original error when in testing mode.
+                    isInTestingMode() || console.error(error);
+
                     reject(new BadGatewayError());
                 } else {
                     resolve({message: incomingMessage, body: response});
@@ -86,12 +95,10 @@ export class ProxyHandler extends AbstractHandler {
      * * the method is read from original AWS request,
      * * the header fi
      *
-
-
      * @return {Promise<Https.RequestOptions>} [description]
      */
-    protected buildProxyOptions(): Promise<NodeRequest.Options> {
-        let options: NodeRequest.Options = {
+    protected buildProxyOptions(): Promise<HttpRequest.Options> {
+        let options: HttpRequest.Options = {
             port: this.getRemotePort(),
             url: this.getRemoteHost() + this.getRemoteBaseUrl() + this.getRemotePath(),
             method: this.getMethod(),
