@@ -23,7 +23,6 @@
         "joi": "^10.2.0",
         "jsonwebtoken": "^7.2.1",
         "mustache": "^2.3.0",
-        "qs": "^6.4.0",
         "randomstring": "^1.1.5",
         "request": "^2.81.0",
         "uniqid": "^4.1.1"
