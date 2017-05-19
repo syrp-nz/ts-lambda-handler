@@ -14,7 +14,7 @@ The _LambdaHandler_ library is designed to write reusable object oriented code f
 
 ## Installation
 ```bash
-npm install --save lambda-handler
+npm install --save ts-lambda-handler
 ```
 
 ## Show me some examples
