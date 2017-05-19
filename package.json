@@ -1,6 +1,6 @@
 {
     "name": "ts-lambda-handler",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "description": "Typescript library for writing AWS Lambda functions.",
     "keywords": ["typescript", "AWS", "Lambda"],
     "bugs": {
@@ -26,7 +26,6 @@
         "qs": "^6.4.0",
         "randomstring": "^1.1.5",
         "request": "^2.81.0",
-        "rxjs": "^5.1.1",
         "uniqid": "^4.1.1"
     },
     "devDependencies": {
