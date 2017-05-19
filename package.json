@@ -28,10 +28,10 @@
         "uniqid": "^4.1.1"
     },
     "devDependencies": {
-        "@djabry/aws-sdk-typescript": "0.0.11",
+        "@djabry/aws-sdk-typescript": "^0.0.11",
         "@types/aws-lambda": "^0.0.7",
         "@types/chai": "^3.5.2",
-        "@types/chai-as-promised": "0.0.30",
+        "@types/chai-as-promised": "^0.0.30",
         "@types/crypto-js": "^3.1.33",
         "@types/extend": "^2.0.30",
         "@types/joi": "^10.0.0",
@@ -39,7 +39,7 @@
         "@types/mocha": "^2.2.41",
         "@types/node": "^7.0.5",
         "@types/qs": "^6.2.31",
-        "@types/request": "0.0.43",
+        "@types/request": "^0.0.43",
         "@types/sinon": "^2.2.2",
         "aws-lambda-mock-context": "^3.0.1",
         "aws-sdk-mock": "^1.6.1",
