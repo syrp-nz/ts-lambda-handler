@@ -1,9 +1,23 @@
 import { APIGatewayEvent } from 'aws-lambda';
 import * as JOI from 'joi';
 import { HttpVerb } from './Types';
+/**
+ * Abstract an AWS APIGatewayEvent object. `Request` provides various utility methods to
+ * * read query string parameters or header values in a case insensitive way ;
+ * * validate query string parameters ;
+ * * Read common request data like the origin domain, content-type header ;
+ * * Parse request body to sensible object.
+ */
 export declare class Request {
     protected event: APIGatewayEvent;
+    /**
+     * Initialize the request from a APIGatewayEvent.
+     * @param  {APIGatewayEvent} event APIGatewayEvent received from AWS Lambda
+     */
     constructor(event: APIGatewayEvent);
+    /**
+     * Raw event data received from AWS Lambda.
+     */
     readonly data: APIGatewayEvent;
     /**
      * Lower case all the keys in the provided list.
@@ -13,14 +27,14 @@ export declare class Request {
         [key: string]: string;
     }): void;
     /**
-     * Retrieve the a header value if it exists.
+     * Retrieve a header value if it exists.
      * @param  {string}    key  Case Insensitive header key
      * @param  {string}    defaultVal Value to return if that header is undefined.
      * @return {string}
      */
     getHeader(key: string, defaultVal?: string): string;
     /**
-     * Retrieve the method for this request.
+     * Retrieve the method used to initiate this request.
      */
     getMethod(): HttpVerb;
     /**
@@ -45,6 +59,12 @@ export declare class Request {
      * @return {string}
      */
     getStageVariable(key: string, defaultVal?: string): string;
+    /**
+     * Retrieve a resource ID path parameter. Assumes that path parameter name is _id_.
+     * @todo Need to rethink this method.
+     * @deprecated
+     * @return {string} [description]
+     */
     getResourceId(): string;
     /**
      * Retrieve a specific value from an array or return a default value.
@@ -92,8 +112,8 @@ export declare class Request {
     /**
      * Validate the Query string parameter using the provided shcema. If the validation passes, a void promise is
      * return. Otherwise the promise is rejected with an appropriate HTTP error
-     * @param  {JOI.SchemaMap} schema [description]
-     * @return {Promise<void>}        [description]
+     * @param  {JOI.SchemaMap} schema
+     * @return {Promise<void>}
      */
     validateQueryString(schema: JOI.SchemaMap): Promise<void>;
 }

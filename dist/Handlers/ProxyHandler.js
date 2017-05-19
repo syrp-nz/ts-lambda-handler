@@ -12,7 +12,8 @@ var __extends = (this && this.__extends) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 var AbstractHandler_1 = require("./AbstractHandler");
 var Errors_1 = require("../Errors");
-var NodeRequest = require("request");
+var HttpRequest = require("request");
+var Functions_1 = require("../Utilities/Functions");
 var DEFAULT_CONFIG = {
     baseUrl: '/',
     pathParameterName: 'path',
@@ -40,10 +41,12 @@ var ProxyHandler = (function (_super) {
         var _this = _super.call(this, config) || this;
         _this.remoteHost = remoteHost;
         _this.config = config;
-        _this.config = Object.assign(DEFAULT_CONFIG, config);
-        if (!_this.config.port) {
-            _this.config.port = _this.config.ssl ? 443 : 80;
-        }
+        /**
+         * Reference to the `request` module. We could call the module directly, but that make it more difficult to unit
+         * test.
+         */
+        _this.httpRequest = HttpRequest;
+        _this.config = Object.assign({}, DEFAULT_CONFIG, config);
         return _this;
     }
     ProxyHandler.prototype.process = function (request, response) {
@@ -67,10 +70,12 @@ var ProxyHandler = (function (_super) {
      * @return {Promise<ProxyResponse>}         [description]
      */
     ProxyHandler.prototype.proxyRequest = function (options) {
+        var _this = this;
         return new Promise(function (resolve, reject) {
-            NodeRequest(options, function (error, incomingMessage, response) {
+            _this.httpRequest(options, function (error, incomingMessage, response) {
                 if (error) {
-                    console.error(error);
+                    // Don't log the original error when in testing mode.
+                    Functions_1.isInTestingMode() || console.error(error);
                     reject(new Errors_1.BadGatewayError());
                 }
                 else {
@@ -116,7 +121,13 @@ var ProxyHandler = (function (_super) {
      * in the constructor. Can be overriden to adjust the remote host on the fly.
      */
     ProxyHandler.prototype.getRemotePort = function () {
-        return this.config.port;
+        if (this.config.port) {
+            return this.config.port;
+        }
+        else {
+            // If the port is not explicitly define use the protocol to pick which port to use.
+            return this.config.ssl ? 443 : 80;
+        }
     };
     /**
      * Build the Path of the remote request. This method can be overriden to alter where the request are directed.
@@ -152,7 +163,7 @@ var ProxyHandler = (function (_super) {
         this.config.whiteListedHeaders.forEach(function (header) {
             var headerValue = _this.request.getHeader(header);
             if (headerValue != '') {
-                headers[header.toLowerCase()] = headerValue;
+                headers[header] = headerValue;
             }
         });
         return headers;
@@ -180,10 +191,20 @@ var ProxyHandler = (function (_super) {
     ProxyHandler.prototype.processResponse = function (incomingMessage, body) {
         var _this = this;
         this.response.setStatusCode(incomingMessage.statusCode);
-        this.config.whiteListedResponseHeaders.forEach(function (header) {
-            var headerValue = _this.request.getHeader(header);
-            if (headerValue != '') {
-                _this.response.addHeader(header.toLowerCase(), headerValue);
+        // Lowercase all the header keys.
+        var headers = incomingMessage.headers;
+        for (var key in headers) {
+            var lowerCaseKey = key.toLowerCase();
+            if (key != lowerCaseKey) {
+                headers[lowerCaseKey] = headers[key];
+                delete headers[key];
+            }
+        }
+        // Find headers we can returned to the user.
+        this.config.whiteListedResponseHeaders.forEach(function (key) {
+            var lowerCaseKey = key.toLowerCase();
+            if (headers[lowerCaseKey] != undefined) {
+                _this.response.addHeader(key, headers[lowerCaseKey]);
             }
         });
         this.response.setBody(body.toString());

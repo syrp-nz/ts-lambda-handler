@@ -7,7 +7,7 @@ var Response = (function () {
         this.callback = callback;
         this.statusCode = 200;
         this.headers = {};
-        this.body = "";
+        this.body = null;
         this._sent = undefined;
     }
     Object.defineProperty(Response.prototype, "sent", {

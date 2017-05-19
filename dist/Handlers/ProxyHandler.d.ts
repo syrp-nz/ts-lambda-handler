@@ -4,7 +4,7 @@ import { AbstractHandler } from './AbstractHandler';
 import { ProxyHandlerConfig } from '../Config/ProxyHandlerConfig';
 import { Request } from '../Request';
 import { Response } from '../Response';
-import * as NodeRequest from 'request';
+import * as HttpRequest from 'request';
 import { Map, HttpVerb, ProxyResponse } from '../Types';
 import * as http from 'http';
 /**
@@ -13,6 +13,11 @@ import * as http from 'http';
 export declare class ProxyHandler extends AbstractHandler {
     protected remoteHost: string;
     protected config: ProxyHandlerConfig;
+    /**
+     * Reference to the `request` module. We could call the module directly, but that make it more difficult to unit
+     * test.
+     */
+    protected httpRequest: HttpRequest.RequestAPI<HttpRequest.Request, HttpRequest.CoreOptions, HttpRequest.RequiredUriUrl>;
     /**
      * Instanciate the Proxy Handler
      * @param  {string}         remoteHost Host where the requests will be rerouted
@@ -29,7 +34,7 @@ export declare class ProxyHandler extends AbstractHandler {
      * @param  {NodeRequest.Options}    options [description]
      * @return {Promise<ProxyResponse>}         [description]
      */
-    protected proxyRequest(options: NodeRequest.Options): Promise<ProxyResponse>;
+    protected proxyRequest(options: HttpRequest.Options): Promise<ProxyResponse>;
     /**
      * Build the options for the request to the remove server. THis method can be overriden to customise the request.
      * By default:
@@ -41,7 +46,7 @@ export declare class ProxyHandler extends AbstractHandler {
      *
      * @return {Promise<Https.RequestOptions>} [description]
      */
-    protected buildProxyOptions(): Promise<NodeRequest.Options>;
+    protected buildProxyOptions(): Promise<HttpRequest.Options>;
     /**
      * Return the remote host where the request should be directed. Defaults to returning the remote host has defined
      * in the constructor. Can be overriden to adjust the remote host on the fly.

@@ -4,8 +4,19 @@ import Url = require('url');
 import * as JOI from 'joi';
 import { HttpVerb } from './Types'
 
+/**
+ * Abstract an AWS APIGatewayEvent object. `Request` provides various utility methods to
+ * * read query string parameters or header values in a case insensitive way ;
+ * * validate query string parameters ;
+ * * Read common request data like the origin domain, content-type header ;
+ * * Parse request body to sensible object.
+ */
 export class Request {
 
+    /**
+     * Initialize the request from a APIGatewayEvent.
+     * @param  {APIGatewayEvent} event APIGatewayEvent received from AWS Lambda
+     */
     constructor(protected event: APIGatewayEvent) {
         // Make sure our Parameter arrays always resolve to objects
         if (this.event.queryStringParameters == null) {
@@ -22,6 +33,9 @@ export class Request {
         this.normalizeKeys(this.event.pathParameters);
     }
 
+    /**
+     * Raw event data received from AWS Lambda.
+     */
     public get data(): APIGatewayEvent {
         return this.event;
     }
@@ -39,7 +53,7 @@ export class Request {
     }
 
     /**
-     * Retrieve the a header value if it exists.
+     * Retrieve a header value if it exists.
      * @param  {string}    key  Case Insensitive header key
      * @param  {string}    defaultVal Value to return if that header is undefined.
      * @return {string}
@@ -49,7 +63,7 @@ export class Request {
     }
 
     /**
-     * Retrieve the method for this request.
+     * Retrieve the method used to initiate this request.
      */
     public getMethod(): HttpVerb {
         return <HttpVerb>this.event.httpMethod.toUpperCase();
@@ -86,6 +100,12 @@ export class Request {
         return this.getValue(this.event.stageVariables, key, defaultVal, false);
     }
 
+    /**
+     * Retrieve a resource ID path parameter. Assumes that path parameter name is _id_.
+     * @todo Need to rethink this method.
+     * @deprecated
+     * @return {string} [description]
+     */
     public getResourceId(): string {
         return this.getPathParameter('id');
     }
@@ -206,8 +226,8 @@ export class Request {
     /**
      * Validate the Query string parameter using the provided shcema. If the validation passes, a void promise is
      * return. Otherwise the promise is rejected with an appropriate HTTP error
-     * @param  {JOI.SchemaMap} schema [description]
-     * @return {Promise<void>}        [description]
+     * @param  {JOI.SchemaMap} schema
+     * @return {Promise<void>}
      */
     public validateQueryString(schema: JOI.SchemaMap): Promise<void> {
         const result = JOI.validate(

@@ -3,7 +3,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var Errors_1 = require("./Errors");
 var Url = require("url");
 var JOI = require("joi");
+/**
+ * Abstract an AWS APIGatewayEvent object. `Request` provides various utility methods to
+ * * read query string parameters or header values in a case insensitive way ;
+ * * validate query string parameters ;
+ * * Read common request data like the origin domain, content-type header ;
+ * * Parse request body to sensible object.
+ */
 var Request = (function () {
+    /**
+     * Initialize the request from a APIGatewayEvent.
+     * @param  {APIGatewayEvent} event APIGatewayEvent received from AWS Lambda
+     */
     function Request(event) {
         this.event = event;
         // Make sure our Parameter arrays always resolve to objects
@@ -19,6 +30,9 @@ var Request = (function () {
         this.normalizeKeys(this.event.pathParameters);
     }
     Object.defineProperty(Request.prototype, "data", {
+        /**
+         * Raw event data received from AWS Lambda.
+         */
         get: function () {
             return this.event;
         },
@@ -37,7 +51,7 @@ var Request = (function () {
         }
     };
     /**
-     * Retrieve the a header value if it exists.
+     * Retrieve a header value if it exists.
      * @param  {string}    key  Case Insensitive header key
      * @param  {string}    defaultVal Value to return if that header is undefined.
      * @return {string}
@@ -47,7 +61,7 @@ var Request = (function () {
         return this.getValue(this.event.headers, key, defaultVal);
     };
     /**
-     * Retrieve the method for this request.
+     * Retrieve the method used to initiate this request.
      */
     Request.prototype.getMethod = function () {
         return this.event.httpMethod.toUpperCase();
@@ -83,6 +97,12 @@ var Request = (function () {
         if (defaultVal === void 0) { defaultVal = ''; }
         return this.getValue(this.event.stageVariables, key, defaultVal, false);
     };
+    /**
+     * Retrieve a resource ID path parameter. Assumes that path parameter name is _id_.
+     * @todo Need to rethink this method.
+     * @deprecated
+     * @return {string} [description]
+     */
     Request.prototype.getResourceId = function () {
         return this.getPathParameter('id');
     };
@@ -193,8 +213,8 @@ var Request = (function () {
     /**
      * Validate the Query string parameter using the provided shcema. If the validation passes, a void promise is
      * return. Otherwise the promise is rejected with an appropriate HTTP error
-     * @param  {JOI.SchemaMap} schema [description]
-     * @return {Promise<void>}        [description]
+     * @param  {JOI.SchemaMap} schema
+     * @return {Promise<void>}
      */
     Request.prototype.validateQueryString = function (schema) {
         var result = JOI.validate(this.data.queryStringParameters, JOI.object().keys(schema));
