@@ -9,8 +9,8 @@ import { HttpError } from './HttpError';
 export class ForbiddenError extends HttpError {
 
     constructor(details: ValidationErrorItem[] = [{
-        message: 'UnauthorizedError',
-        type: 'UnauthorizedError',
+        message: 'ForbiddenError',
+        type: 'ForbiddenError',
         path: ''
     }]) {
         super('ForbiddenError', 403, details);
