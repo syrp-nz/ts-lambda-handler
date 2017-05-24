@@ -13,8 +13,14 @@ const callback:Lambda.ProxyCallback = (err: Error, data:Lambda.ProxyResult) => {
     proxyResult = data;
 };
 
+let response: Lib.Response;
+
 describe('Response', () => {
-    let response = new Lib.Response(callback);
+
+    beforeEach(() => {
+        response =  new Lib.Response(callback);
+    });
+
 
     it('setBody', () => {
         assert.isNull(response.body);
@@ -94,6 +100,24 @@ describe('Response', () => {
         assert.equal(response.addCookie('key', 'value', {httpOnly: false, secure: true}).headers['set-cookie'], 'key=value; path=/; Secure');
         assert.equal(response.addCookie('key', 'value', {httpOnly: true, secure: false}).headers['set-cookie'], 'key=value; path=/; HttpOnly');
         assert.equal(response.addCookie('key', 'value', {httpOnly: false, secure: false}).headers['set-cookie'], 'key=value; path=/');
+    });
+
+    it('setMaxAge', () => {
+        assert.isNotOk(response.headers['cache-control']);
+
+        let chain = response.setMaxAge(10);
+        assert.equal(chain, response, 'setMaxAge should be chainable');
+        assert.isOk(response.headers['cache-control']);
+        assert.equal(response.headers['cache-control'].toLowerCase(), 'max-age=10');
+
+        response.setMaxAge(1);
+        assert.equal(response.headers['cache-control'].toLowerCase(), 'max-age=1');
+
+        response.setMaxAge(0);
+        assert.equal(response.headers['cache-control'].toLowerCase(), 'no-cache');
+
+        response.setMaxAge(-10);
+        assert.equal(response.headers['cache-control'].toLowerCase(), 'no-cache');
     });
 
 });
