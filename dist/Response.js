@@ -52,6 +52,19 @@ var Response = (function () {
         return this;
     };
     /**
+     * Set the `cache-control` header. If the `seconds` is greater than zero, it will set the max age flag. Smaller values will set the header to `no-cache`.
+     * @param  {number} value
+     */
+    Response.prototype.setMaxAge = function (seconds) {
+        if (seconds > 0) {
+            this.addHeader('cache-control', "max-age=" + seconds);
+        }
+        else {
+            this.addHeader('cache-control', "no-cache");
+        }
+        return this;
+    };
+    /**
      * Remove a header from the response.
      * @param  {string} key
      * @return {this}

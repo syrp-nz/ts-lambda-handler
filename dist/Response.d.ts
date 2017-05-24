@@ -36,6 +36,11 @@ export declare class Response implements ProxyResult {
         [key: string]: string;
     }): this;
     /**
+     * Set the `cache-control` header. If the `seconds` is greater than zero, it will set the max age flag. Smaller values will set the header to `no-cache`.
+     * @param  {number} value
+     */
+    setMaxAge(seconds: number): this;
+    /**
      * Remove a header from the response.
      * @param  {string} key
      * @return {this}

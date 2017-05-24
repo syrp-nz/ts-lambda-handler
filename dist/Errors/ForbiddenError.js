@@ -20,8 +20,8 @@ var ForbiddenError = (function (_super) {
     __extends(ForbiddenError, _super);
     function ForbiddenError(details) {
         if (details === void 0) { details = [{
-                message: 'UnauthorizedError',
-                type: 'UnauthorizedError',
+                message: 'ForbiddenError',
+                type: 'ForbiddenError',
                 path: ''
             }]; }
         return _super.call(this, 'ForbiddenError', 403, details) || this;
