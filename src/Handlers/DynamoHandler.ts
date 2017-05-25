@@ -6,7 +6,7 @@ import { DynamoDB } from 'aws-sdk';
 import { ValidationError, NotFoundError, MethodNotAllowedError } from '../Errors';
 import * as JOI from 'joi';
 import { Map } from '../Types';
-import * as uniqid from 'uniqid';
+import * as uuid from 'uuid/v4';
 import * as extend from 'extend';
 
 /**
@@ -190,7 +190,7 @@ export abstract class DynamoHandler extends AbstractHandler {
      * @return {Promise<DynamoDB.Key>}
      */
     protected getSingleKey(newEntry: boolean = false): Promise<DynamoDB.Key> {
-        return Promise.resolve({'id': newEntry ? uniqid() : this.request.getResourceId()});
+        return Promise.resolve({'id': newEntry ? uuid() : this.request.getResourceId()});
     }
 
     /**
@@ -576,7 +576,7 @@ export abstract class DynamoHandler extends AbstractHandler {
      */
     protected itemValidationSchema(): JOI.SchemaMap {
         const schemaMap: JOI.SchemaMap = {
-            id: JOI.string().required()
+            id: JOI.string().required().guid()
         }
         return schemaMap;
     }

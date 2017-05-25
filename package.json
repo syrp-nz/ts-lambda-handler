@@ -1,6 +1,6 @@
 {
   "name": "ts-lambda-handler",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Typescript library for writing AWS Lambda functions.",
   "keywords": [
     "typescript",
@@ -20,7 +20,7 @@
   },
   "author": "Maxime Rainville <webmaster@syrp.co.nz> (https://syrp.co.nz)",
   "dependencies": {
-    "request": "^2.81.0",
+    "@types/uuid": "^2.0.29",
     "dynamodb-doc": "^1.0.0",
     "extend": "^3.0.0",
     "fs-extra": "^3.0.1",
@@ -28,7 +28,8 @@
     "jsonwebtoken": "^7.2.1",
     "mustache": "^2.3.0",
     "randomstring": "^1.1.5",
-    "uniqid": "^4.1.1"
+    "request": "^2.81.0",
+    "uuid": "^3.0.1"
   },
   "devDependencies": {
     "@djabry/aws-sdk-typescript": "^0.0.11",
