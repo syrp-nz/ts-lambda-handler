@@ -14,7 +14,7 @@ var AbstractHandler_1 = require("./AbstractHandler");
 var aws_sdk_1 = require("aws-sdk");
 var Errors_1 = require("../Errors");
 var JOI = require("joi");
-var uniqid = require("uniqid");
+var uuid = require("uuid/v4");
 var extend = require("extend");
 /**
  * An Handler to implement a REST endpoint for a Dynamo table.
@@ -176,7 +176,7 @@ var DynamoHandler = (function (_super) {
      */
     DynamoHandler.prototype.getSingleKey = function (newEntry) {
         if (newEntry === void 0) { newEntry = false; }
-        return Promise.resolve({ 'id': newEntry ? uniqid() : this.request.getResourceId() });
+        return Promise.resolve({ 'id': newEntry ? uuid() : this.request.getResourceId() });
     };
     /**
      * Search the DynamoDB table for records matchign the query.
@@ -523,7 +523,7 @@ var DynamoHandler = (function (_super) {
      */
     DynamoHandler.prototype.itemValidationSchema = function () {
         var schemaMap = {
-            id: JOI.string().required()
+            id: JOI.string().required().guid()
         };
         return schemaMap;
     };
