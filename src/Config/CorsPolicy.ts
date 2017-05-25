@@ -1,65 +1,96 @@
 import { Request } from '../Request';
 import { CorsPolicyRule } from './CorsPolicyRule';
+import { Map, CorsAccessControlValue, HttpVerb } from '../Types'
 
+/**
+ * Utility class to generate CORS Policy headers.
+ */
 export class CorsPolicy {
 
+    /**
+     * Instanciate the CorsPolicy class
+     * @param  {CorsPolicyRule} config Configuration use to build the CORS policy.
+     */
     constructor(protected config: CorsPolicyRule) { }
 
     /**
      * Build the CORS Policy headers
      * @param  {Request}           request
-     * @return {CorsPolicyHeaders}
      */
-    public headers(request: Request): {[key:string]: string} {
-        const rules = this.config;
-        const headers = {};
+    public headers(request: Request): Map<string> {
+        const headers: Map<string> = {};
 
-        // Check which headers we want to allow on request.
-        if (rules.allowedHeaders && rules.allowedHeaders.length > 0) {
-            headers['Access-Control-Allow-Headers'] = rules.allowedHeaders.join(',');
-        } else {
-            headers['Access-Control-Allow-Headers'] = '*';
-        }
+        headers['Access-Control-Allow-Origin'] = this.allowedOrigins(
+            request.getOriginDomain(),
+            request.getOriginProtocol()
+        );
 
-        // Check which methods we want to allow on request.
-        if (rules.allowedMethods && rules.allowedMethods.length > 0) {
-            headers['Access-Control-Allow-Methods'] = rules.allowedMethods.join(',');
-        } else {
-            headers['Access-Control-Allow-Methods'] = '*';
-        }
-
-        // Check which domain origin we want to allow.
-        if (rules.allowedOrigins && rules.allowedOrigins.length > 0) {
-            // Let's get all the variables we need
-            let origin = ''
-            const originDomain = request.getOriginDomain();
-            const originProtocol = request.getOriginProtocol();
-
-            // Let's check which protocol we want to allow
-            if (rules.allowHttp && originProtocol == 'http') {
-                origin = 'http://';
-            } else {
-                origin = 'https://';
-            }
-
-            // Let's try finding the domain used to access the function in our list of allowed origin.
-            const idx = rules.allowedOrigins.indexOf(originDomain);
-            if (idx !== -1) {
-                origin += rules.allowedOrigins[idx];
-            } else {
-                // We haven't found the domain, let's just returned the first domain
-                origin += rules.allowedOrigins[0]
-            }
-
-            headers['Access-Control-Allow-Origin'] = origin;
-        }
+        headers['Access-Control-Allow-Headers'] = this.accessControlHeader(this.config.allowedHeaders);
+        headers['Access-Control-Allow-Methods'] = this.accessControlHeader(this.config.allowedMethods);
 
         return headers;
     }
-}
 
-export interface CorsPolicyHeaders {
-    'Access-Control-Allow-Headers'?: string;
-    'Access-Control-Allow-Methods'?: string;
-    'Access-Control-Allow-Origin'?: string;
+    /**
+     * Generate Access Control headers from the provided value list. Use to generate the Allow-Headers and
+     * Allow-Methods headers. If the value is a list of string, builds a concatenated list. Otherise return *
+     * @param  {CorsAccessControlValue<string>} value
+     * @return {string}
+     */
+    private accessControlHeader(value: CorsAccessControlValue<string>): string {
+        if (value == '*') {
+            return '*';
+        }
+
+        if (value != undefined) {
+            const values: string[] = value;
+            if (values.length > 0) {
+                return values.join(',');
+            }
+        }
+
+        // Default to allowing all
+        return undefined;
+    }
+
+    /**
+     * Build the Access-Control-Allow-Origin header value
+     * @param  {string} originHost     Origin Domain of the request
+     * @param  {string} originProtocol Origin protocol of the request
+     * @return {string}
+     */
+    private allowedOrigins(originHost: string, originProtocol:string ): string {
+        const allowedOrigins = this.config.allowedOrigins;
+
+        // If the allowedOrigins is not an array, return the value as-is.
+        if (allowedOrigins == undefined || allowedOrigins == '*') {
+            return <string>allowedOrigins;
+        }
+
+        // Recast the allowed origin as an array for convenience.
+        let allowedOriginsList: string[] = allowedOrigins;
+
+        // If the list is empty, returned undefined. This will disallow remote requests.
+        if (allowedOriginsList.length == 0) {
+            return undefined;
+        }
+
+        // Lowercase everything before we start doing comparaisons.
+        originHost = originHost.toLowerCase();
+        allowedOriginsList = allowedOriginsList.map((str) => {
+            return str.toLowerCase();
+        });
+
+        // If we can't find the reques's origin in the list of allowed origin, disallow remote request.
+        if (allowedOriginsList.indexOf(originHost) == -1) {
+            return undefined
+        }
+
+        // Confirm if we allow remote request from an HTTP host.
+        if (originProtocol.toLowerCase() == 'http' && this.config.allowHttp) {
+            return `http://${originHost}`;
+        } else {
+            return `https://${originHost}`;
+        }
+    }
 }
