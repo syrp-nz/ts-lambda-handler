@@ -11,14 +11,23 @@ import { HttpVerb } from './Types';
 export declare class Request {
     protected event: APIGatewayEvent;
     /**
+     * Contains the original event data without any of the normalisation.
+     */
+    protected originalEvent: APIGatewayEvent;
+    /**
      * Initialize the request from a APIGatewayEvent.
      * @param  {APIGatewayEvent} event APIGatewayEvent received from AWS Lambda
      */
     constructor(event: APIGatewayEvent);
     /**
-     * Raw event data received from AWS Lambda.
+     * Event data received from AWS Lambda. The keys of some parameters will have been lowercase to make it easier to
+     * search for specific entries in a case insensitive way.
      */
     readonly data: APIGatewayEvent;
+    /**
+     * Raw event data received from AWS Lambda.
+     */
+    readonly originalData: APIGatewayEvent;
     /**
      * Lower case all the keys in the provided list.
      * @param {[key:string]: string}

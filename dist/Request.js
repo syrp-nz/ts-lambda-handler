@@ -17,6 +17,7 @@ var Request = (function () {
      */
     function Request(event) {
         this.event = event;
+        this.originalEvent = Object.assign({}, event);
         // Make sure our Parameter arrays always resolve to objects
         if (this.event.queryStringParameters == null) {
             this.event.queryStringParameters = {};
@@ -31,10 +32,21 @@ var Request = (function () {
     }
     Object.defineProperty(Request.prototype, "data", {
         /**
-         * Raw event data received from AWS Lambda.
+         * Event data received from AWS Lambda. The keys of some parameters will have been lowercase to make it easier to
+         * search for specific entries in a case insensitive way.
          */
         get: function () {
             return this.event;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Request.prototype, "originalData", {
+        /**
+         * Raw event data received from AWS Lambda.
+         */
+        get: function () {
+            return this.originalEvent;
         },
         enumerable: true,
         configurable: true

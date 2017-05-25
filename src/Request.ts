@@ -14,10 +14,17 @@ import { HttpVerb } from './Types'
 export class Request {
 
     /**
+     * Contains the original event data without any of the normalisation.
+     */
+    protected originalEvent: APIGatewayEvent;
+
+    /**
      * Initialize the request from a APIGatewayEvent.
      * @param  {APIGatewayEvent} event APIGatewayEvent received from AWS Lambda
      */
     constructor(protected event: APIGatewayEvent) {
+        this.originalEvent = Object.assign({}, event);
+
         // Make sure our Parameter arrays always resolve to objects
         if (this.event.queryStringParameters == null) {
             this.event.queryStringParameters = {};
@@ -34,10 +41,18 @@ export class Request {
     }
 
     /**
-     * Raw event data received from AWS Lambda.
+     * Event data received from AWS Lambda. The keys of some parameters will have been lowercase to make it easier to
+     * search for specific entries in a case insensitive way.
      */
     public get data(): APIGatewayEvent {
         return this.event;
+    }
+
+    /**
+     * Raw event data received from AWS Lambda.
+     */
+    public get originalData(): APIGatewayEvent {
+        return this.originalEvent;
     }
 
     /**
