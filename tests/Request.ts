@@ -7,17 +7,27 @@ import * as lambda from 'aws-lambda';
 
 let fakeEvent: lambda.APIGatewayEvent = JSON.parse(JSON.stringify(fakeEventSource));
 
+function cloner<T>(original: T): T {
+    return JSON.parse(JSON.stringify(original));
+}
+
 const assert = chai.assert;
 
 describe('Request', () => {
-    let request = new Lib.Request(fakeEvent);
+    let clone = cloner(fakeEvent)
+    let request = new Lib.Request(clone);
+
 
     it('constructor');
 
     it('getBodyAsJSON');
 
     it( 'data', () => {
-        assert.strictEqual(request.data, fakeEvent);
+        assert.strictEqual(request.data, clone);
+    });
+
+    it( 'originalData', () => {
+        assert.deepEqual(request.originalData, fakeEvent);
     });
 
     it( 'getHeader', () => {

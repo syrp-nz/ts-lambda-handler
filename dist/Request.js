@@ -17,7 +17,7 @@ var Request = (function () {
      */
     function Request(event) {
         this.event = event;
-        this.originalEvent = Object.assign({}, event);
+        this.originalEvent = JSON.parse(JSON.stringify(event));
         // Make sure our Parameter arrays always resolve to objects
         if (this.event.queryStringParameters == null) {
             this.event.queryStringParameters = {};
