@@ -4,7 +4,7 @@ import { Buffer } from 'buffer';
 /**
  * Simple utility Hash array type
  */
-export type Map<T> = {[key: string]: T};
+export type ObjectMap<T> = {[key: string]: T};
 
 /**
  * A Valid HTTP operation

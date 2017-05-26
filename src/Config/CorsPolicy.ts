@@ -1,6 +1,6 @@
 import { Request } from '../Request';
 import { CorsPolicyRule } from './CorsPolicyRule';
-import { Map, CorsAccessControlValue, HttpVerb } from '../Types'
+import { ObjectMap, CorsAccessControlValue, HttpVerb } from '../Types'
 
 /**
  * Utility class to generate CORS Policy headers.
@@ -17,8 +17,8 @@ export class CorsPolicy {
      * Build the CORS Policy headers
      * @param  {Request}           request
      */
-    public headers(request: Request): Map<string> {
-        const headers: Map<string> = {};
+    public headers(request: Request): ObjectMap<string> {
+        const headers: ObjectMap<string> = {};
 
         headers['Access-Control-Allow-Origin'] = this.allowedOrigins(
             request.getOriginDomain(),

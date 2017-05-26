@@ -7,7 +7,7 @@ import { Response } from '../Response';
 import { AmazonResourceName, SQSQueueARN } from '../Utilities';
 import { isInTestingMode} from '../Utilities/Functions';
 import { ProcessQueueHandlerConfig } from '../Config';
-import { Map } from '../Types';
+import { ObjectMap } from '../Types';
 import { validateLambdaInvokeResponse } from '../Utilities/Functions';
 
 export const LAMBDA_FN_ATTR = 'lambdaFn';
@@ -21,8 +21,8 @@ export class ProcessQueueHandler extends AbstractHandler {
 
     protected arn:SQSQueueARN;
 
-    protected jobErrors:Map<any>;
-    protected jobSuccesses:Map<AWS.Lambda.InvocationResponse>;
+    protected jobErrors:ObjectMap<any>;
+    protected jobSuccesses:ObjectMap<AWS.Lambda.InvocationResponse>;
 
     /**
      * Intanciate the QueuingHandler

@@ -7,7 +7,7 @@ import { ValidationError, NotFoundError, MethodNotAllowedError, BadGatewayError 
 import * as JOI from 'joi';
 
 import * as HttpRequest from 'request';
-import { Map, HttpVerb, ProxyResponse } from '../Types';
+import { ObjectMap, HttpVerb, ProxyResponse } from '../Types';
 import * as http from 'http';
 import { isInTestingMode} from '../Utilities/Functions';
 
@@ -167,8 +167,8 @@ export class ProxyHandler extends AbstractHandler {
      *
      * This method can also be overriden to provide a custom list of headers.
      */
-    protected getRemoteHeaders(): Map<string> {
-        const headers: Map<string> = {};
+    protected getRemoteHeaders(): ObjectMap<string> {
+        const headers: ObjectMap<string> = {};
 
         this.config.whiteListedHeaders.forEach((header) => {
             const headerValue = this.request.getHeader(header);
@@ -183,7 +183,7 @@ export class ProxyHandler extends AbstractHandler {
     /**
      * Return the query string parameter that will be added to the proxy request.
      */
-    protected getQueryStringParameters(): Map<string> {
+    protected getQueryStringParameters(): ObjectMap<string> {
         return this.request.data.queryStringParameters;
     }
 

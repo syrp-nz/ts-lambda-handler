@@ -5,7 +5,7 @@ import { Response } from '../Response';
 import { DynamoDB } from 'aws-sdk';
 import { ValidationError, NotFoundError, MethodNotAllowedError } from '../Errors';
 import * as JOI from 'joi';
-import { Map } from '../Types';
+import { ObjectMap } from '../Types';
 import * as uuid from 'uuid/v4';
 import * as extend from 'extend';
 
@@ -63,8 +63,8 @@ export abstract class DynamoHandler extends AbstractHandler {
      */
     protected searchOperation: "scan" | "query" = "query";
 
-    protected expressionAttributeNames: Map<string>;
-    protected expressionAttributeValues: Map<any>;
+    protected expressionAttributeNames: ObjectMap<string>;
+    protected expressionAttributeValues: ObjectMap<any>;
 
     /**
      * Instance of Document Client use to communicate with DynamoDB.
@@ -307,7 +307,7 @@ export abstract class DynamoHandler extends AbstractHandler {
     /**
      * Get a value suitable for the Exclusive Start Key parameter when perfoming a search.
      */
-    protected abstract getExclusiveStartKey(): Map<string|number>;
+    protected abstract getExclusiveStartKey(): ObjectMap<string|number>;
 
     /**
      * Get a value suitable for the Key Condition Expression parameter when perfoming a search.
