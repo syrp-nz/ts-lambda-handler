@@ -62,6 +62,28 @@ describe('Authorizers.JWTAuthorizer', () => {
         });
     });
 
+    it('getUser:Invalid Auth Type', () => {
+        fakeEvent.headers['authorization'] = 'Basic ' + validSig;
+        return auth.getUser(new Lib.Request(fakeEvent)).then((user) => {
+            assert(false, '`getUser` should throw an error when trying to authenticated with Basic Auth.');
+        }).catch((error) => {
+            if (error.message != 'UnauthorizedError') {
+                return Promise.reject(error);
+            }
+        });
+    });
+
+    it('getUser:Empty Bearer token', () => {
+        fakeEvent.headers['authorization'] = 'Bearer    ';
+        return auth.getUser(new Lib.Request(fakeEvent)).then((user) => {
+            assert(false, '`getUser` should throw an error when trying to login with an empty token.');
+        }).catch((error) => {
+            if (error.message != 'UnauthorizedError') {
+                return Promise.reject(error);
+            }
+        });
+    });
+
     it('isAuthorised:Anonymous', () => {
         delete fakeEvent.headers['authorization'];
         const request = new Lib.Request(fakeEvent);
