@@ -27,29 +27,49 @@ var JWTAuthorizer = (function () {
      * @return {Promise<boolean>}       [description]
      */
     JWTAuthorizer.prototype.getUser = function (request) {
+        var _this = this;
+        return this.getJwtSignature(request).then(function (signature) {
+            if (signature == '') {
+                var anonymousUser = {
+                    id: null,
+                    anonymous: true,
+                    name: 'Anonymous'
+                };
+                return Promise.resolve(anonymousUser);
+            }
+            try {
+                var payload = JWT.verify(signature, _this.getSecret());
+                var user = _this.extractValues(payload);
+                return Promise.resolve(Object.assign(payload, user));
+            }
+            catch (error) {
+                return Promise.reject(new UnauthorizedError_1.UnauthorizedError());
+            }
+        });
+    };
+    /**
+     * Retrieve a JWT Signature string from the request or an empty string if none can be found.
+     *
+     * This method looks for the token in the `authorization`, but child classrd can override it to get the signature
+     * from somewhere else.
+     * @param  {[type]}          request [description]
+     * @return {Promise<string>}         [description]
+     */
+    JWTAuthorizer.prototype.getJwtSignature = function (request) {
         // Get the Signature from the header
         var authHeader = request.getHeader('authorization');
+        // If the header is not define, just return a blank string.
         if (authHeader == '') {
-            var anonymousUser = {
-                id: null,
-                anonymous: true,
-                name: 'Anonymous'
-            };
-            return Promise.resolve(anonymousUser);
+            return Promise.resolve('');
         }
-        var matches = authHeader.match(/^Bearer +(.*)$/);
+        // Otherwise extract the signature for the header
+        var matches = authHeader.match(/^Bearer +([^ ]+)$/);
         if (!matches || matches.length != 2) {
+            // The header doesn't match our expected regex, let's just deny access.
             return Promise.reject(new UnauthorizedError_1.UnauthorizedError());
         }
-        var signature = matches[1];
-        try {
-            var payload = JWT.verify(signature, this.getSecret());
-            var user = this.extractValues(payload);
-            return Promise.resolve(Object.assign(payload, user));
-        }
-        catch (error) {
-            return Promise.reject(new UnauthorizedError_1.UnauthorizedError());
-        }
+        // Return the signature part of the match
+        return Promise.resolve(matches[1]);
     };
     /**
      * Confirm if the provided user as the appropriate priviledges to execute the request. JWTAuthorizer assumes that

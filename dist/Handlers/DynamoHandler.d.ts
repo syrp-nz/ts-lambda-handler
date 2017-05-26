@@ -4,7 +4,7 @@ import { Request } from '../Request';
 import { Response } from '../Response';
 import { DynamoDB } from 'aws-sdk';
 import * as JOI from 'joi';
-import { Map } from '../Types';
+import { ObjectMap } from '../Types';
 /**
  * An Handler to implement a REST endpoint for a Dynamo table.
  */
@@ -50,8 +50,8 @@ export declare abstract class DynamoHandler extends AbstractHandler {
      * What operation to use when performing the search.
      */
     protected searchOperation: "scan" | "query";
-    protected expressionAttributeNames: Map<string>;
-    protected expressionAttributeValues: Map<any>;
+    protected expressionAttributeNames: ObjectMap<string>;
+    protected expressionAttributeValues: ObjectMap<any>;
     /**
      * Instance of Document Client use to communicate with DynamoDB.
      * @type {DynamoDB.DocumentClient}
@@ -119,7 +119,7 @@ export declare abstract class DynamoHandler extends AbstractHandler {
     /**
      * Get a value suitable for the Exclusive Start Key parameter when perfoming a search.
      */
-    protected abstract getExclusiveStartKey(): Map<string | number>;
+    protected abstract getExclusiveStartKey(): ObjectMap<string | number>;
     /**
      * Get a value suitable for the Key Condition Expression parameter when perfoming a search.
      */

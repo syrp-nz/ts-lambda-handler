@@ -5,7 +5,7 @@ import { Request } from '../Request';
 import { Response } from '../Response';
 import { AmazonResourceName, SQSQueueARN } from '../Utilities';
 import { ProcessQueueHandlerConfig } from '../Config';
-import { Map } from '../Types';
+import { ObjectMap } from '../Types';
 export declare const LAMBDA_FN_ATTR = "lambdaFn";
 /**
  * Read messages from an SQS Queue and attempt to process them with Lambda functions.
@@ -13,8 +13,8 @@ export declare const LAMBDA_FN_ATTR = "lambdaFn";
 export declare class ProcessQueueHandler extends AbstractHandler {
     protected config: ProcessQueueHandlerConfig;
     protected arn: SQSQueueARN;
-    protected jobErrors: Map<any>;
-    protected jobSuccesses: Map<AWS.Lambda.InvocationResponse>;
+    protected jobErrors: ObjectMap<any>;
+    protected jobSuccesses: ObjectMap<AWS.Lambda.InvocationResponse>;
     /**
      * Intanciate the QueuingHandler
      * @param  {AmazonResourceName|string} arn ARN of the queue where the event should be saved

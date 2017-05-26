@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var Errors_1 = require("./Errors");
 var Url = require("url");
 var JOI = require("joi");
+var Cookie = require("cookie");
 /**
  * Abstract an AWS APIGatewayEvent object. `Request` provides various utility methods to
  * * read query string parameters or header values in a case insensitive way ;
@@ -236,6 +237,30 @@ var Request = (function () {
         else {
             return Promise.resolve();
         }
+    };
+    /**
+     * Retrieve the list of cookies from the request. If the cookie header is not present or if the cookie string is
+     * malformed than an empty object is returned.
+     * is returned.
+     * @return {Map<string>}
+     */
+    Request.prototype.getCookies = function () {
+        if (this.cookies == undefined) {
+            var cookieStr = this.getHeader('cookie').trim();
+            this.cookies = Cookie.parse(cookieStr);
+        }
+        return this.cookies;
+    };
+    /**
+     * Retrieve a cookie by its key
+     * @param  {string} key [description]
+     * @param  {string} defaultVal Default value to return if the cookie key is unset.
+     * @return {string}
+     */
+    Request.prototype.getCookie = function (key, defaultVal) {
+        if (defaultVal === void 0) { defaultVal = ''; }
+        var cookies = this.getCookies();
+        return cookies[key] == undefined ? defaultVal : cookies[key];
     };
     return Request;
 }());

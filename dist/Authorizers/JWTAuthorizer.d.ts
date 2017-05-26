@@ -26,6 +26,15 @@ export declare class JWTAuthorizer implements HandlerAuthorizer {
      */
     getUser(request: Request): Promise<UserInterface>;
     /**
+     * Retrieve a JWT Signature string from the request or an empty string if none can be found.
+     *
+     * This method looks for the token in the `authorization`, but child classrd can override it to get the signature
+     * from somewhere else.
+     * @param  {[type]}          request [description]
+     * @return {Promise<string>}         [description]
+     */
+    protected getJwtSignature(request: Request): Promise<string>;
+    /**
      * Confirm if the provided user as the appropriate priviledges to execute the request. JWTAuthorizer assumes that
      * any user that is not anonymous has access.
      * @param  {Request}           request

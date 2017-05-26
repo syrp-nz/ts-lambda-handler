@@ -1,6 +1,6 @@
 import { APIGatewayEvent } from 'aws-lambda';
 import * as JOI from 'joi';
-import { HttpVerb } from './Types';
+import { HttpVerb, ObjectMap } from './Types';
 /**
  * Abstract an AWS APIGatewayEvent object. `Request` provides various utility methods to
  * * read query string parameters or header values in a case insensitive way ;
@@ -10,6 +10,10 @@ import { HttpVerb } from './Types';
  */
 export declare class Request {
     protected event: APIGatewayEvent;
+    /**
+     * Working variable to contain cookies. Get instanciated on the first call to `getCookies()`.
+     */
+    private cookies;
     /**
      * Contains the original event data without any of the normalisation.
      */
@@ -125,4 +129,18 @@ export declare class Request {
      * @return {Promise<void>}
      */
     validateQueryString(schema: JOI.SchemaMap): Promise<void>;
+    /**
+     * Retrieve the list of cookies from the request. If the cookie header is not present or if the cookie string is
+     * malformed than an empty object is returned.
+     * is returned.
+     * @return {Map<string>}
+     */
+    getCookies(): ObjectMap<string>;
+    /**
+     * Retrieve a cookie by its key
+     * @param  {string} key [description]
+     * @param  {string} defaultVal Default value to return if the cookie key is unset.
+     * @return {string}
+     */
+    getCookie(key: string, defaultVal?: string): string;
 }

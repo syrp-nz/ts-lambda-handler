@@ -3,7 +3,7 @@ import { IncomingMessage } from 'http';
 /**
  * Simple utility Hash array type
  */
-export declare type Map<T> = {
+export declare type ObjectMap<T> = {
     [key: string]: T;
 };
 /**

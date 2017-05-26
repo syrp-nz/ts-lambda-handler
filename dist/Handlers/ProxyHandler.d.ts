@@ -5,7 +5,7 @@ import { ProxyHandlerConfig } from '../Config/ProxyHandlerConfig';
 import { Request } from '../Request';
 import { Response } from '../Response';
 import * as HttpRequest from 'request';
-import { Map, HttpVerb, ProxyResponse } from '../Types';
+import { ObjectMap, HttpVerb, ProxyResponse } from '../Types';
 import * as http from 'http';
 /**
  * An handler to relay a request through a proxy.
@@ -77,11 +77,11 @@ export declare class ProxyHandler extends AbstractHandler {
      *
      * This method can also be overriden to provide a custom list of headers.
      */
-    protected getRemoteHeaders(): Map<string>;
+    protected getRemoteHeaders(): ObjectMap<string>;
     /**
      * Return the query string parameter that will be added to the proxy request.
      */
-    protected getQueryStringParameters(): Map<string>;
+    protected getQueryStringParameters(): ObjectMap<string>;
     /**
      * Get the body of the proxy request as a string. Default behavior is to return the body of the original request.
      * @return {string}

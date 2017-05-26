@@ -1,6 +1,6 @@
 import { Request } from '../Request';
 import { CorsPolicyRule } from './CorsPolicyRule';
-import { Map } from '../Types';
+import { ObjectMap } from '../Types';
 /**
  * Utility class to generate CORS Policy headers.
  */
@@ -15,7 +15,7 @@ export declare class CorsPolicy {
      * Build the CORS Policy headers
      * @param  {Request}           request
      */
-    headers(request: Request): Map<string>;
+    headers(request: Request): ObjectMap<string>;
     /**
      * Generate Access Control headers from the provided value list. Use to generate the Allow-Headers and
      * Allow-Methods headers. If the value is a list of string, builds a concatenated list. Otherise return *
