@@ -2,7 +2,8 @@ import {APIGatewayEvent} from 'aws-lambda';
 import { BadRequestError, ValidationError } from './Errors';
 import Url = require('url');
 import * as JOI from 'joi';
-import { HttpVerb } from './Types'
+import { HttpVerb, ObjectMap } from './Types';
+import * as Cookie from 'cookie';
 
 /**
  * Abstract an AWS APIGatewayEvent object. `Request` provides various utility methods to
@@ -12,6 +13,11 @@ import { HttpVerb } from './Types'
  * * Parse request body to sensible object.
  */
 export class Request {
+
+    /**
+     * Working variable to contain cookies. Get instanciated on the first call to `getCookies()`.
+     */
+    private cookies: ObjectMap<string> ;
 
     /**
      * Contains the original event data without any of the normalisation.
@@ -254,6 +260,32 @@ export class Request {
         } else {
             return Promise.resolve();
         }
+    }
+
+    /**
+     * Retrieve the list of cookies from the request. If the cookie header is not present or if the cookie string is
+     * malformed than an empty object is returned.
+     * is returned.
+     * @return {Map<string>}
+     */
+    public getCookies(): ObjectMap<string> {
+        if (this.cookies == undefined) {
+            const cookieStr = this.getHeader('cookie').trim();
+            this.cookies = Cookie.parse(cookieStr);
+        }
+
+        return this.cookies;
+    }
+
+    /**
+     * Retrieve a cookie by its key
+     * @param  {string} key [description]
+     * @param  {string} defaultVal Default value to return if the cookie key is unset.
+     * @return {string}
+     */
+    public getCookie(key: string, defaultVal: string = ''): string {
+        const cookies = this.getCookies();
+        return cookies[key] == undefined ? defaultVal : cookies[key];
     }
 
 }

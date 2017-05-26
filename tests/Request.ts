@@ -5,18 +5,18 @@ import { fakeEvent as fakeEventSource } from './FakeEvent';
 import * as JOI from 'joi';
 import * as lambda from 'aws-lambda';
 
-let fakeEvent: lambda.APIGatewayEvent = JSON.parse(JSON.stringify(fakeEventSource));
 
 function cloner<T>(original: T): T {
     return JSON.parse(JSON.stringify(original));
 }
+
+let fakeEvent: lambda.APIGatewayEvent = cloner(fakeEventSource);
 
 const assert = chai.assert;
 
 describe('Request', () => {
     let clone = cloner(fakeEvent)
     let request = new Lib.Request(clone);
-
 
     it('constructor');
 
@@ -103,5 +103,58 @@ describe('Request', () => {
             }
         });
     });
+
+    it ('getCookies', () => {
+        // Empty cookie
+        request = new Lib.Request(fakeEvent);
+        assert.deepEqual(request.getCookies(), {});
+
+        let alteredEvent = cloner(fakeEvent);
+
+        // Malformed cookied
+        alteredEvent.headers['cookie'] = 'sda7gy78&*&*&*&*!Yfg8DS&gvsdh7 ; ^YG^A&FG(^7fagsf67)';
+        request = new Lib.Request(alteredEvent);
+        assert.deepEqual(request.getCookies(), {});
+
+        // Properly form cookie
+        alteredEvent.headers['cookie'] = 'hello=world';
+        request = new Lib.Request(alteredEvent);
+        assert.deepEqual(request.getCookies(), {'hello': 'world'});
+
+        alteredEvent.headers['cookie'] = 'hello=world;value2=foo%20bar';
+        request = new Lib.Request(alteredEvent);
+        assert.deepEqual(request.getCookies(), {'hello': 'world', 'value2':'foo bar'});
+
+    });
+
+    it ('getCookie', () => {
+        // Empty cookie
+        request = new Lib.Request(fakeEvent);
+        assert.equal(request.getCookie('hello'), '');
+        assert.equal(request.getCookie('hello', '0'), '0');
+
+        let alteredEvent = cloner(fakeEvent);
+
+        // Malformed cookied
+        alteredEvent.headers['cookie'] = 'sda7gy78&*&*&*&*!Yfg8DS&gvsdh7 ; ^YG^A&FG(^7fagsf67)';
+        request = new Lib.Request(alteredEvent);
+        assert.equal(request.getCookie('hello'), '');
+        assert.equal(request.getCookie('hello', '0'), '0');
+
+        // Properly form cookie
+        alteredEvent.headers['cookie'] = 'hello=world';
+        request = new Lib.Request(alteredEvent);
+        assert.equal(request.getCookie('hello'), 'world');
+        assert.equal(request.getCookie('hello', '0'), 'world');
+        assert.equal(request.getCookie('value2'), '');
+
+        alteredEvent.headers['cookie'] = 'hello=world;value2=foo%20bar';
+        request = new Lib.Request(alteredEvent);
+        assert.equal(request.getCookie('hello'), 'world');
+        assert.equal(request.getCookie('hello', '0'), 'world');
+        assert.equal(request.getCookie('value2'), 'foo bar');
+
+    });
+
 
 });
