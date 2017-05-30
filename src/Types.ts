@@ -12,6 +12,18 @@ export type ObjectMap<T> = {[key: string]: T};
 export type HttpVerb = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'OPTIONS' | 'PATCH';
 
 /**
+ * Enumaration of valid HTTP verbs.
+ */
+export const HttpVerbs: ObjectMap<HttpVerb> = {
+    GET:        'GET',
+    POST:       'POST',
+    PUT:        'PUT',
+    DELETE:     'DELETE',
+    OPTIONS:    'OPTIONS',
+    PATCH:      'PATCH'
+};
+
+/**
  * An HTTP Request response containing both the response's message information and the response's body.
  *
  * Used by `ProxyHandler`.
