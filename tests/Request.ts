@@ -20,7 +20,28 @@ describe('Request', () => {
 
     it('constructor');
 
-    it('getBodyAsJSON');
+    it('getBodyAsJSON', () => {
+        let clone = cloner(fakeEvent)
+        let request = new Lib.Request(clone);
+
+        assert.deepEqual(request.getBodyAsJSON(), JSON.parse(fakeEvent.body));
+
+        clone = cloner(fakeEvent)
+        clone.body = '';
+        request = new Lib.Request(clone);
+        assert.throws(() => request.getBodyAsJSON(), 'ValidationError');
+
+        clone = cloner(fakeEvent)
+        clone.body = 'Non-sense!!!';
+        request = new Lib.Request(clone);
+        assert.throws(() => request.getBodyAsJSON(), 'ValidationError');
+
+        clone = cloner(fakeEvent)
+        clone.body = '12345';
+        request = new Lib.Request(clone);
+        assert.throws(() => request.getBodyAsJSON(), 'ValidationError');
+
+    });
 
     it( 'data', () => {
         assert.strictEqual(request.data, clone);

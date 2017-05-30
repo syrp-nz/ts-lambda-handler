@@ -236,12 +236,14 @@ export class Request {
             const data = JSON.parse(this.event.body);
             if (typeof data == 'object') {
                 return data;
-            } else {
-                throw new BadRequestError();
             }
-        } catch (error) {
-            throw new BadRequestError();
-        }
+        } catch (error) { }
+
+        throw new ValidationError([{
+            message: 'Can not parse JSON string.',
+            type: 'BadRequestError',
+            path: ''
+        }]);
     }
 
     /**
