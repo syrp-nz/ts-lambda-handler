@@ -1,5 +1,5 @@
 import { ProxyHandler, APIGatewayEvent, Context, ProxyCallback } from 'aws-lambda';
-import { AbstractHandler } from './AbstractHandler';
+import { RestfulHandler } from './RestfulHandler';
 import { Request } from '../Request';
 import { Response } from '../Response';
 import { DynamoDB } from 'aws-sdk';
@@ -12,7 +12,7 @@ import * as extend from 'extend';
 /**
  * An Handler to implement a REST endpoint for a Dynamo table.
  */
-export abstract class DynamoHandler extends AbstractHandler {
+export abstract class DynamoHandler extends RestfulHandler {
 
     /**
      * Table associated to the request
@@ -78,50 +78,6 @@ export abstract class DynamoHandler extends AbstractHandler {
             this.expressionAttributeNames = {};
             this.expressionAttributeValues = {};
         });
-    }
-
-
-    public process(request:Request, response:Response): Promise<void> {
-        let p: Promise<void>;
-
-        switch (request.getMethod()) {
-            case "GET":
-                if (this.isSingleRequest()) {
-                    p = this.retrieveSingle();
-                } else {
-                    p = this.search();
-                }
-                break;
-            case "POST":
-                if (this.isSingleRequest()) {
-                    p = Promise.reject(new MethodNotAllowedError);
-                } else {
-                    p = this.create();
-                }
-                break;
-            case "PUT":
-                if (this.isSingleRequest()) {
-                    p = this.update();
-                } else {
-                    p = Promise.reject(new MethodNotAllowedError);
-                }
-                break;
-            case "DELETE":
-                if (this.isSingleRequest()) {
-                    p = this.delete();
-                } else {
-                    p = Promise.reject(new MethodNotAllowedError);
-                }
-                break;
-            case "OPTIONS":
-                response.send();
-                p = Promise.resolve();
-                break;
-            default:
-                p = Promise.reject(new MethodNotAllowedError);
-        }
-
-        return p;
     }
 
     /**
