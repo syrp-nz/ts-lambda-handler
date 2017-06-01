@@ -2,8 +2,7 @@ import { ProxyHandler, APIGatewayEvent, Context, ProxyCallback } from 'aws-lambd
 import { AbstractHandler } from './AbstractHandler';
 import { Request } from '../Request';
 import { Response } from '../Response';
-import { ValidationError, NotFoundError, MethodNotAllowedError } from '../Errors';
-import * as JOI from 'joi';
+import { MethodNotAllowedError } from '../Errors';
 import { ObjectMap, HttpVerbs } from '../Types';
 import * as extend from 'extend';
 
@@ -13,7 +12,7 @@ import * as extend from 'extend';
 export abstract class RestfulHandler extends AbstractHandler {
 
     public process(request:Request, response:Response): Promise<void> {
-        let p: Promise<void> = Promise.reject(new MethodNotAllowedError);
+        let p: Promise<void>;
         const isSingle = this.isSingleRequest();
 
         // Dispatch the request to the appropriate function based on HTTP verb used.
@@ -50,6 +49,10 @@ export abstract class RestfulHandler extends AbstractHandler {
                 break;
         }
 
+        if (p == undefined) {
+            p = Promise.reject(new MethodNotAllowedError);
+        }
+
         return p;
     }
 
@@ -66,14 +69,6 @@ export abstract class RestfulHandler extends AbstractHandler {
      * @return {Promise<void>}
      */
     protected abstract retrieveSingle(): Promise<void>;
-
-    /**
-     * Return a key suitable for retriveing, deleting or updating a single item in the Dynamo table.
-     *
-     * @param {boolean} newEntry If this is set to true, a unique id will be generated. This is suitable for creting a
-     *                           new entry
-     */
-    protected abstract getSingleKey(newEntry?: boolean): Promise<any>;
 
     /**
      * Retrieve a list of results
