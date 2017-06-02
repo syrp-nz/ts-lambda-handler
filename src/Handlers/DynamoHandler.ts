@@ -3,7 +3,7 @@ import { RestfulHandler } from './RestfulHandler';
 import { Request } from '../Request';
 import { Response } from '../Response';
 import { DynamoDB } from 'aws-sdk';
-import { ValidationError, NotFoundError, MethodNotAllowedError } from '../Errors';
+import { ValidationError, NotFoundError, MethodNotAllowedError, BadRequestError } from '../Errors';
 import * as JOI from 'joi';
 import { ObjectMap } from '../Types';
 import * as uuid from 'uuid/v4';
@@ -167,7 +167,6 @@ export abstract class DynamoHandler extends RestfulHandler {
             return p.then((results) => {
                 return this.formatSearchResult(results);
             }).then((formattedResults) => {
-                console.dir(formattedResults);
                 this.response.setBody(formattedResults).send();
                 return Promise.resolve();
             });
@@ -448,6 +447,12 @@ export abstract class DynamoHandler extends RestfulHandler {
         }).then((data) => {
             this.response.setStatusCode(201).setBody(data).send();
             return Promise.resolve();
+        }).catch((error) => {
+            if (error.code == 'ConditionalCheckFailedException') {
+                return Promise.reject(new BadRequestError());
+            } else {
+                return Promise.reject(error);
+            }
         })
     }
 
