@@ -211,6 +211,7 @@ export abstract class DynamoHandler extends AbstractHandler {
             return p.then((results) => {
                 return this.formatSearchResult(results);
             }).then((formattedResults) => {
+                console.dir(formattedResults);
                 this.response.setBody(formattedResults).send();
                 return Promise.resolve();
             });
@@ -368,8 +369,14 @@ export abstract class DynamoHandler extends AbstractHandler {
 
         // Format each item individually
         const promises:Promise<any>[] = [];
-        for (let item of results.Items) {
-            promises.push(this.formatResult(item));
+        for (let i in results.Items) {
+            let item = results.Items[i];
+
+            promises.push(
+                this.formatResult(item)
+                .then((formattedItem) => {
+                    results.Items[i] = formattedItem;
+                }));
         }
 
         return Promise.all(promises).then(() => Promise.resolve(results));
@@ -475,7 +482,7 @@ export abstract class DynamoHandler extends AbstractHandler {
             const params: DynamoDB.PutItemInput = {
                 TableName : this.table,
                 Item: data,
-                ConditionExpression: 'attribute_not_exists(id)'
+                ConditionExpression: this.creationConditionExpression()
             }
 
             return this.getDocumentClient().put(params).promise()
@@ -518,7 +525,7 @@ export abstract class DynamoHandler extends AbstractHandler {
             const params: DynamoDB.PutItemInput = {
                 TableName : this.table,
                 Item: data,
-                ConditionExpression: 'attribute_exists(id)'
+                ConditionExpression: this.updateConditionExpression()
             }
 
             return this.getDocumentClient().put(params).promise();
@@ -593,6 +600,15 @@ export abstract class DynamoHandler extends AbstractHandler {
     }
 
     /**
+     * Build a condition expression to be appended to a creation request. That's allows you to make sure an id field
+     * doesn't exists before creation.
+     * @return {string}
+     */
+    protected creationConditionExpression(): string {
+        return 'attribute_not_exists(id)';
+    }
+
+    /**
      * This method is called just before updating an item in the table and after the item has passed validation. You can
      * override it to augment the data that will be store in the database. e.g.: By adding a updated at timestamp or a
      * updated by field.
@@ -606,6 +622,15 @@ export abstract class DynamoHandler extends AbstractHandler {
     protected preUpdate(data: any, old:any): Promise<any> {
         data = extend(true, data, old);
         return Promise.resolve(data);
+    }
+
+    /**
+     * Build a condition expression to be appended to an update request. That's allows you to make sure an id field
+     * exists before the update.
+     * @return {string}
+     */
+    protected updateConditionExpression(): string {
+        return 'attribute_exists(id)';
     }
 
     /**
