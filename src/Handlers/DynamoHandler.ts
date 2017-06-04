@@ -323,18 +323,11 @@ export abstract class DynamoHandler extends RestfulHandler {
         delete results.ScannedCount;
 
         // Format each item individually
-        const promises:Promise<any>[] = [];
-        for (let i in results.Items) {
-            let item = results.Items[i];
+        const promises:Promise<any>[] = results.Items.map(item => this.formatResult(item));
 
-            promises.push(
-                this.formatResult(item)
-                .then((formattedItem) => {
-                    results.Items[i] = formattedItem;
-                }));
-        }
-
-        return Promise.all(promises).then(() => Promise.resolve(results));
+        return Promise.all(promises).then((results) => {
+            return Promise.resolve(results)
+        });
     }
 
     /**
