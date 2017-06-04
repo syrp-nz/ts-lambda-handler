@@ -326,7 +326,7 @@ export abstract class DynamoHandler extends RestfulHandler {
         const promises:Promise<any>[] = results.Items.map(item => this.formatResult(item));
 
         return Promise.all(promises).then((results) => {
-            return Promise.resolve(results)
+            return Promise.resolve({Items: results})
         });
     }
 
