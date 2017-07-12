@@ -14,7 +14,7 @@ export interface UserInterface {
     /**
      * Human readable representation for that user
      */
-    name: string;
+    name?: string;
 
     /**
      * Email for this user

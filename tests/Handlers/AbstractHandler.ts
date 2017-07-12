@@ -57,7 +57,7 @@ class TestAuthorizer implements Lib.Authorizers.HandlerAuthorizer {
         if (this.failUser) {
             return Promise.reject(new Lib.Errors.UnauthorizedError());
         } else {
-            return Promise.resolve({id: '123', anonymouse: false})
+            return Promise.resolve({id: '123', anonymous: false})
         }
     }
 
