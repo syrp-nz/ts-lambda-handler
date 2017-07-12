@@ -263,7 +263,7 @@ export abstract class DynamoHandler extends RestfulHandler {
     /**
      * Get a value suitable for the Exclusive Start Key parameter when perfoming a search.
      */
-    protected abstract getExclusiveStartKey(): ObjectMap<string|number>;
+    protected abstract getExclusiveStartKey(): DynamoDB.Key;
 
     /**
      * Get a value suitable for the Key Condition Expression parameter when perfoming a search.
