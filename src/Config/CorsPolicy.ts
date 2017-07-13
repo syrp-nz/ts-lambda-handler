@@ -22,7 +22,8 @@ export class CorsPolicy {
 
         headers['Access-Control-Allow-Origin'] = this.allowedOrigins(
             request.getOriginDomain(),
-            request.getOriginProtocol()
+            request.getOriginProtocol(),
+            request.getOriginPort(),
         );
 
         headers['Access-Control-Allow-Headers'] = this.accessControlHeader(this.config.allowedHeaders);
@@ -59,7 +60,7 @@ export class CorsPolicy {
      * @param  {string} originProtocol Origin protocol of the request
      * @return {string}
      */
-    private allowedOrigins(originHost: string, originProtocol:string ): string {
+    private allowedOrigins(originHost: string, originProtocol:string, originPort:string = '' ): string {
         const allowedOrigins = this.config.allowedOrigins;
 
         // If the allowedOrigins is not an array, return the value as-is.
@@ -77,11 +78,18 @@ export class CorsPolicy {
 
         // Lowercase everything before we start doing comparaisons.
         originHost = originHost.toLowerCase();
+
         allowedOriginsList = allowedOriginsList.map((str) => {
             return str.toLowerCase();
         });
 
-        // If we can't find the reques's origin in the list of allowed origin, disallow remote request.
+        // Append the port number if need be
+        if (originPort && originPort.trim() != '' ) {
+            originHost += ':' + originPort;
+        }
+
+
+        // If we can't find the request's origin in the list of allowed origin, disallow remote request.
         if (allowedOriginsList.indexOf(originHost) == -1) {
             return undefined
         }

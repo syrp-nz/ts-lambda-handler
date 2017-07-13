@@ -51,6 +51,56 @@ describe('Config.CorsPolicy', () => {
 
     });
 
+    it('policy with a single domain, weird port and matching origin', () => {
+        policy = new Lib.Config.CorsPolicy({
+            allowedOrigins: ['valid.com:8080']
+        });
+        request.data.headers['origin'] = 'https://valid.com:8080/'
+        headers = policy.headers(request);
+        assert.ok(headers);
+        assert.isUndefined(headers['Access-Control-Allow-Headers']);
+        assert.isUndefined(headers['Access-Control-Allow-Methods']);
+        assert.isOk(headers['Access-Control-Allow-Origin']);
+        assert.equal(headers['Access-Control-Allow-Origin'], 'https://valid.com:8080');
+
+    });
+
+    it('policy with a single domain, weird port and matching origin domain, but wrong port', () => {
+        policy = new Lib.Config.CorsPolicy({
+            allowedOrigins: ['valid.com:80']
+        });
+        request.data.headers['origin'] = 'https://valid.com:443/'
+        headers = policy.headers(request);
+        assert.ok(headers);
+        assert.isUndefined(headers['Access-Control-Allow-Headers']);
+        assert.isUndefined(headers['Access-Control-Allow-Methods']);
+        assert.isUndefined(headers['Access-Control-Allow-Origin']);
+    });
+
+    it('policy with a single domain without port and matching origin domain but port', () => {
+        policy = new Lib.Config.CorsPolicy({
+            allowedOrigins: ['valid.com']
+        });
+        request.data.headers['origin'] = 'https://valid.com:80/'
+        headers = policy.headers(request);
+        assert.ok(headers);
+        assert.isUndefined(headers['Access-Control-Allow-Headers']);
+        assert.isUndefined(headers['Access-Control-Allow-Methods']);
+        assert.isUndefined(headers['Access-Control-Allow-Origin']);
+    });
+
+    it('policy with a single domain, weird port and matching origin domain no port', () => {
+        policy = new Lib.Config.CorsPolicy({
+            allowedOrigins: ['valid.com:8080']
+        });
+        request.data.headers['origin'] = 'https://valid.com/'
+        headers = policy.headers(request);
+        assert.ok(headers);
+        assert.isUndefined(headers['Access-Control-Allow-Headers']);
+        assert.isUndefined(headers['Access-Control-Allow-Methods']);
+        assert.isUndefined(headers['Access-Control-Allow-Origin']);
+    });
+
     it('policy with a multiple domain and no matching origin', () => {
         policy = new Lib.Config.CorsPolicy({
             allowedOrigins: ['valid.com', 'www.valid.com', 'valid.net']

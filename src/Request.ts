@@ -200,6 +200,22 @@ export class Request {
     }
 
     /**
+     * Return the port of the Request Origin.
+     * @return {string}
+     */
+    public getOriginPort(): string {
+        const origin = this.getOrigin();
+        if (origin) {
+            const url = Url.parse(origin);
+            if (url.port) {
+                return url.port;
+            }
+        }
+
+        return '';
+    }
+
+    /**
      * Attempt to parse the body content has defined by the content type header
      * @param   {string}    type    Optional parameter to explicitely define the MIME type to use when parsing the body.
      * @return {any}

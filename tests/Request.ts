@@ -177,5 +177,18 @@ describe('Request', () => {
 
     });
 
+    it ('getOriginPort', () => {
+        // Empty cookie
+        request = new Lib.Request(fakeEvent);
+        assert.equal(request.getOriginPort(), '');
+
+        let alteredEvent = cloner(fakeEvent);
+
+        // Malformed cookied
+        alteredEvent.headers['origin'] = 'https://example.com:8080';
+        request = new Lib.Request(alteredEvent);
+        assert.equal(request.getOriginPort(), '8080');
+    });
+
 
 });
