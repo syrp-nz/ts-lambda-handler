@@ -20,6 +20,8 @@
   },
   "author": "Maxime Rainville <webmaster@syrp.co.nz> (https://syrp.co.nz)",
   "dependencies": {
+    "aws-lambda": "^0.1.2",
+    "aws-sdk": "^2.97.0",
     "cookie": "^0.3.1",
     "dynamodb-doc": "^1.0.0",
     "extend": "^3.0.0",

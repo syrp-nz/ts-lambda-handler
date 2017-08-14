@@ -2,6 +2,6 @@ language: node_js
 node_js:
 - '8.2'
 before_install:
-- npm install -g typescript@2.4.1
+- npm install -g typescript@2.4.1 mocha@^2.2.41 chai@^3.5.0
 script:
 - npm test
