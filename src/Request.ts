@@ -92,8 +92,8 @@ export class Request {
 
     /**
      * Retrieve a query string parameter if it exists.
-     * @param  {string}    key  Case Insensitive header key
-     * @param  {string}    defaultVal Value to return if that header is undefined.
+     * @param  {string}    key  Case Insensitive query string parameter
+     * @param  {string}    defaultVal Value to return if that query string parameter is undefined.
      * @return {string}
      */
     public getQueryStringParameter(key: string, defaultVal: string = ''): string {
@@ -102,8 +102,8 @@ export class Request {
 
     /**
      * Retrieve a path parameter if it exists.
-     * @param  {string}    key  Case Insensitive header key
-     * @param  {string}    defaultVal Value to return if that header is undefined.
+     * @param  {string}    key  Case Insensitive path parameter
+     * @param  {string}    defaultVal Value to return if that path parameter is undefined.
      * @return {string}
      */
     public getPathParameter(key: string, defaultVal: string = ''): string {
